@@ -24,9 +24,9 @@
  * @brief Implements the character schedule class.
  */
  
-#include "world/schedule.h"
-#include "event/date.h"
-#include "event/time_event.h"
+#include "schedule.h"
+#include <adonthell/event/date.h>
+#include <adonthell/event/time_event.h>
 
 using world::schedule;
 
@@ -42,6 +42,7 @@ schedule::schedule ()
 // destructor
 schedule::~schedule ()
 {
+    clear_schedule();
     delete QueuedSchedule;
 }
 
@@ -102,7 +103,8 @@ void schedule::set_active (const bool & a)
     }
     else
     {
-        fprintf (stderr, "*** schedule::set_active: schedule is active already!\n");
+        LOG(WARNING) << "schedule " << Schedule.file_name() << "."
+                     << Schedule.class_name() << " is active already!";
     }
 }
 
@@ -111,7 +113,7 @@ bool schedule::set_schedule (const string & file, PyObject *args)
 {
     if (Running)
     {
-        fprintf (stderr, "*** schedule::set_schedule: stop current schedule first!\n");
+        LOG(WARNING) << "stop current schedule first!";
         return false;
     }
     
@@ -127,9 +129,11 @@ bool schedule::set_schedule (const string & file, PyObject *args)
         // cancel alarm
         Factory.clear ();
     
+        Py_DECREF(new_args);
         return true;
     }
-    
+
+    Py_DECREF(new_args);
     return false;
 }
 
@@ -190,7 +194,7 @@ void schedule::queue_alarm (const string & time, const bool & absolute)
 {
     if (!QueuedSchedule)
     {
-        fprintf (stderr, "*** schedule::queue_alarm: queue a schedule first!\n");
+        LOG(WARNING) << "queue_alarm: queue a schedule first!";
         return;
     }
     
@@ -262,9 +266,11 @@ bool schedule::get_state (base::flat & file)
     PyTuple_SET_ITEM (args, 0, python::pass_instance (this));
     if (!Manager.create_instance (SCHEDULE_DIR + script, script, args))
     {
-        fprintf (stderr, "*** schedule::get_state: failed loading manager script '%s'.\n", script.c_str());
+        LOG(ERROR) << "failed loading manager script '" << script << "'.";
+        Py_DECREF(args);
         return false;
     }
+    Py_DECREF(args);
     
     // restore schedule script, if any
     record = file.get_flat ("sdl", false);
@@ -275,9 +281,11 @@ bool schedule::get_state (base::flat & file)
         PyTuple_SET_ITEM (args, 0, python::pass_instance (this));
         if (!Schedule.create_instance (SCHEDULE_DIR + script, script, args))
         {
-            fprintf (stderr, "*** schedule::get_state: failed loading schedule script '%s'.\n", script.c_str());
+            LOG(ERROR) << "failed loading schedule script '" << script << "'.";
+            Py_DECREF(args);
             return false;
         }
+        Py_DECREF(args);
         
         // restart schedule
         Schedule.call_method ("start");
@@ -296,7 +304,7 @@ bool schedule::get_state (base::flat & file)
         QueuedSchedule = new schedule_data;
         if (!QueuedSchedule->get_state (record))
         {
-            fprintf (stderr, "*** schedule::get_state: failed loading queued schedule\n");
+            LOG(ERROR) << "failed loading queued schedule";
             return false;
         }
     }
@@ -304,7 +312,7 @@ bool schedule::get_state (base::flat & file)
     // restore alarm
     if (!Factory.get_state (file))
     {
-        fprintf (stderr, "*** schedule::get_state: failed loading alarm\n");
+        LOG(ERROR) << "failed loading alarm";
         return false;
     }
     

@@ -26,20 +26,23 @@
 
 #include <sstream>
 
-#include "gui/fontcache.h"
-#include "gui/font.h"
+#include "fontcache.h"
+#include "font.h"
 
 using gui::glyph_info;
 using gui::font_cache;
 
 font_cache::font_cache()
 {
-    // TODO Auto-generated constructor stub
 }
 
 font_cache::~font_cache()
 {
-    // TODO Auto-generated destructor stub
+    std::hash_map<std::string, glyph_info*>::iterator i;
+    for (i = Cache.begin(); i != Cache.end(); i++)
+    {
+        delete i->second;
+    }
 }
 
 const glyph_info* font_cache::get (const u_int32 & glyph, gui::font *f)

@@ -2,22 +2,28 @@
 %feature("autodoc", "1");   // enable docstrings for python wrappers
 
 %{
-#include "rpg/character.h"
-#include "rpg/dialog.h"
-#include "rpg/dialog_line.h"
-#include "rpg/equipment.h"
-#include "rpg/item_storage.h"
-#include "rpg/inventory.h"
-#include "rpg/log_entry.h"
-#include "rpg/log_index.h"
-#include "rpg/quest_event.h"
-#include "rpg/group.h"
-#include "rpg/quest.h"
-#include "rpg/specie.h"
-#include "rpg/faction.h"
+#include <adonthell/rpg/character.h>
+#include <adonthell/rpg/dialog.h>
+#include <adonthell/rpg/dialog_line.h>
+#include <adonthell/rpg/equipment.h>
+#include <adonthell/rpg/item_storage.h>
+#include <adonthell/rpg/inventory.h>
+#include <adonthell/rpg/log_entry.h>
+#include <adonthell/rpg/log_index.h>
+#include <adonthell/rpg/quest_event.h>
+#include <adonthell/rpg/quest.h>
+#include <adonthell/rpg/faction.h>
 
 using rpg::slot;
 using rpg::quest_part;
+
+extern "C" {
+    void check_module_version (const char *name, const unsigned int & module_ver);
+}
+%}
+
+%init %{
+    check_module_version (SWIG_name, SWIGVERSION);
 %}
 
 namespace rpg {
@@ -70,29 +76,27 @@ namespace rpg {
         for (int i = 0; i < size; i++) {
             PyObject *o = PyList_GetItem ($input, i);
             if (PyString_Check(o)) $1->push_back (PyString_AsString (o));
-            else fprintf (stderr, "*** $symname: expected list of strings!\n");
+            else LOG(ERROR) << "$symname: expected string item!";
         }
     }
-    else fprintf (stderr, "*** $symname: expected list of strings!\n");
+    else LOG(ERROR) << "$symname: expected list of strings!";
 }
 
 %typemap(freearg) const std::vector<std::string> & "delete $1;"
 
-%import "base/types.h"
-%import(module="event") "event/event.h"
-%include "python/script.h"
-%include "rpg/item.h"
-%include "rpg/slot.h"
-%include "rpg/character.h"
-%include "rpg/dialog.h"
-%include "rpg/dialog_line.h"
-%include "rpg/inventory.h"
-%include "rpg/equipment.h"
-%include "rpg/item_storage.h"
-%include "rpg/log_entry.h"
-%include "rpg/log_index.h"
-%include "rpg/quest.h"
-%include "rpg/quest_event.h"
-%include "rpg/group.h"
-%include "rpg/specie.h"
-%include "rpg/faction.h"
+%import <adonthell/base/types.h>
+%import(module="event") <adonthell/event/event.h>
+%include <adonthell/python/script.h>
+%include <adonthell/rpg/item.h>
+%include <adonthell/rpg/slot.h>
+%include <adonthell/rpg/character.h>
+%include <adonthell/rpg/dialog.h>
+%include <adonthell/rpg/dialog_line.h>
+%include <adonthell/rpg/inventory.h>
+%include <adonthell/rpg/equipment.h>
+%include <adonthell/rpg/item_storage.h>
+%include <adonthell/rpg/log_entry.h>
+%include <adonthell/rpg/log_index.h>
+%include <adonthell/rpg/quest.h>
+%include <adonthell/rpg/quest_event.h>
+%include <adonthell/rpg/faction.h>

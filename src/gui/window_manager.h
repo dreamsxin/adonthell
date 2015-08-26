@@ -27,59 +27,13 @@
 #ifndef GUI_WINDOW_MANAGER_H
 #define GUI_WINDOW_MANAGER_H
 
-#include "gui/layout.h"
-#include "gui/ui_event_manager.h"
+#include <adonthell/world/mapview.h>
+
+#include "window.h"
+#include "layout.h"
 
 namespace gui
 {
-
-/// different fading styles for toplevel windows
-enum fadetype {NONE, PLAIN, FADE, LEFT, RIGHT, BOTTOM, TOP};    
-
-#ifndef SWIG
-/**
- *
- */
-class manager_child : public layoutchild
-{
-public:
-    manager_child (gui::layout *l, gfx::drawing_area da, const fadetype & f, const bool & s) 
-    : layoutchild (l, da)
-    {
-        Fading = f;
-        Showing = s;
-        Dx = 0;
-        Dy = 0;
-    }
-    
-    /**
-     * Destructor.
-     */
-    virtual ~manager_child()
-    {
-    }
-
-    s_int32 x()
-    {
-        return Dx + Pos.x();
-    }
-
-    s_int32 y()
-    {
-        return Dy + Pos.y();
-    }
-
-    bool operator== (const gui::manager_child & c)
-    {
-        return Child == c.Child;
-    }
-    
-    s_int32 Dx; 
-    s_int32 Dy;
-    fadetype Fading;
-    bool Showing;
-};
-#endif // SWIG
 
 /**
  * The window manager is used to display GUI elements on the screen.
@@ -94,32 +48,70 @@ public:
     static void update();
     
     /**
-     * Add a window at the topmost position of the window stack.
+     * Add a window at the topmost position of the window stack for the window type.
+     * The coordinates are absolute.
      * @param x x coordinate.
      * @param y y coordinate.
-     * @param window the window to newly open. Ownership passes to the manager.
+     * @param content the data to display in a newly opened window.
+     * @param f whether fading in is required.
+     * @param w type of the window.
+     */
+    static void add(const u_int16 & x, const u_int16 & y, gfx::drawable & content, const gui::fade_type & f = NONE, const gui::window_type & w = DIALOG);
+
+    /**
+     * Add a window to the front of the window stack for the window type.
+     * @param window the window to add.
      * @param f whether fading in is required.
      */
-    static void add(const u_int16 & x, const u_int16 & y, gui::layout *window, const gui::fadetype & f = NONE);
+    static void add(gui::window *window, const gui::fade_type & f = NONE);
+
+    /**
+     * Remove the given window from the window stack.
+     * @param content data displayed in the window to close.
+     * @param f whether fading in is required.
+     */
+    static void remove(gfx::drawable & content, const gui::fade_type & f = NONE);
     
     /**
      * Remove the given window from the window stack.
      * @param window the window to close.
-     * @param f whether fading in is required.
      */
-    static void remove(gui::layout *window, const gui::fadetype & f = NONE);
-    
+    static void remove(gui::window *window, const gui::fade_type & f = NONE);
+
+    /**
+     * Queue an ui event to execute before the next gui update. Required to
+     * decouple ui event handling from ui event firing.
+     * @param li the listener to execute.
+     */
+    static void queue_event (events::listener* li)
+    {
+        PendingEvents.push_back (li);
+    }
+
 private:
     /// forbid instantiation
     window_manager ();
-    
-    static bool fade(gui::manager_child & c);
-    
-    /// the list of open windows
-    static std::list<manager_child> Windows;
 
-    /// ui_event manager instance to decouple event triggering from event execution
-    static ui_event_manager EventManager;
+    /// forbid copy construction
+    window_manager (const window_manager &w);
+
+    /// forbid destruction
+    ~window_manager ();
+
+    /// forbid copying
+    window_manager operator= (const window_manager &w);
+    
+    /// perform event handling
+    static void fire_events ();
+
+    /// the list of open, absolute windows
+    static std::list<window*> Windows;
+
+    /// the list of open, world-relative windows
+    static std::list<window*> WorldRelativeWindows;
+    
+    /// storage for pending events.
+    static std::list<events::listener*> PendingEvents;
 };
 
 } // namespace gui

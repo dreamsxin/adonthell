@@ -1,9 +1,11 @@
 backenddir = @backenddir@
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_builddir)
 EXTRA_DIST = CMakeLists.txt
 
+adonthellincludedir = $(pkgincludedir)-@VERSION@/adonthell
+
 ## Our header files
-pkgincludebasedir = $(pkgincludedir)/base
+pkgincludebasedir = $(adonthellincludedir)/base
 pkgincludebase_HEADERS = \
 	base.h \
 	callback.h \
@@ -54,9 +56,9 @@ libadonthell_base_la_LIBADD = $(XML_LIBS) $(libglog_LIBS) $(LIBS)
 
 ## Unit tests
 test_CXXFLAGS = $(libgmock_CFLAGS) $(libgtest_CFLAGS)
-test_LDADD    = $(libgmock_LIBS)   $(libgtest_LIBS)
+test_LDADD    = $(libgmock_LIBS)   $(libgtest_LIBS) $(top_builddir)/src/base/libadonthell_base.la
 
-test_logging_SOURCES  = $(libadonthell_base_la_SOURCES)  test_logging.cc
+test_logging_SOURCES  = test_logging.cc
 test_logging_CXXFLAGS = $(libadonthell_base_la_CXXFLAGS) $(test_CXXFLAGS)
 test_logging_LDADD    = $(libadonthell_base_la_LIBADD)   $(test_LDADD)
 

@@ -1,8 +1,10 @@
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_builddir)
 EXTRA_DIST = CMakeLists.txt
 
+adonthellincludedir = $(pkgincludedir)-@VERSION@/adonthell
+
 ## Our header files
-pkgincluderpgdir = $(pkgincludedir)/rpg
+pkgincluderpgdir = $(adonthellincludedir)/rpg
 pkgincluderpg_HEADERS = \
     character.h \
     dialog.h \
@@ -18,8 +20,7 @@ pkgincluderpg_HEADERS = \
     quest.h \
     quest_event.h \
     quest_event_manager.h \
-    specie.h \
-    group.h \
+    rpg.h \
     slot.h
     
 ## Rpg library
@@ -41,8 +42,7 @@ libadonthell_rpg_la_SOURCES = \
     quest.cc \
     quest_event.cc \
     quest_event_manager.cc \
-    specie.cc \
-    group.cc \
+    rpg.cc \
     slot.cc
 
 libadonthell_rpg_la_CXXFLAGS = $(PY_CFLAGS) $(AM_CXXFLAGS)

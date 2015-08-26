@@ -31,8 +31,8 @@
 
 #include <stdio.h>
 #include <iostream>
-#include "base/endians.h"
-#include "base/file.h"
+#include "endians.h"
+#include "file.h"
 
 using base::gz_file;
 using base::igzstream;
@@ -41,6 +41,7 @@ using base::ogzstream;
 gz_file::gz_file ()
 {
     opened = false;
+    file = NULL;
 }
 
 gz_file::gz_file (const string & fname, gz_type t)

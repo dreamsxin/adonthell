@@ -30,7 +30,7 @@
 #endif
 #include <errno.h>
 
-#include "base/timer.h"
+#include "timer.h"
 
 // some OS don't have nanosleep
 #ifndef HAVE_NANOSLEEP
@@ -95,6 +95,12 @@ namespace base
             req = rem;
             err = nanosleep (&req, &rem);
         } while (err && (errno == EINTR));
+    }
+
+    // return timer to non-elapsed state
+    void timer::synch ()
+    {
+        Lasttime = current_time ();
     }
 
     // wait until current game cycle is over

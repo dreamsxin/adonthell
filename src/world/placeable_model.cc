@@ -29,14 +29,14 @@
  */
 
 
-#include "world/placeable_model.h"
+#include "placeable_model.h"
 
 using namespace world;
 
 // ctor
 placeable_model::placeable_model()
 {
-    CurrentShape = Shapes.begin ();
+    CurrentShape = Shapes.end ();
     Terrain = "None";
 }
 

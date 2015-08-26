@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<Data cs="8dad15bb">
+  <list id="Noble">
+    <string id="gnm">Noble</string>
+    <string id="gcn">faction</string>
+    <list id="gTerr">
+      <s_int8 id="Swamp">-30</s_int8>
+      <s_int8 id="Wood">5</s_int8>
+    </list>
+  </list>
+</Data>

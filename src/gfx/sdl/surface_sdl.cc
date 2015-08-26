@@ -219,7 +219,7 @@ namespace gfx
         return col;
     }
 
-    void surface_sdl::scale(surface *target, const u_int32 & factor) const
+    void surface_sdl::scale_up(surface *target, const u_int32 & factor) const
     {
     	if (length() * factor > target->length() ||
     		height() * factor > target->height())
@@ -257,6 +257,32 @@ namespace gfx
 			// goto next line
 			target_data += ((surface_sdl *)target)->vis->pitch;
 		}
+
+        target->unlock();
+        unlock();
+    }
+
+    void surface_sdl::scale_down(surface *target, const u_int32 & factor) const
+    {
+        if (length() * factor > target->length() ||
+            height() * factor > target->height())
+            return;
+
+        lock();
+        target->lock();
+
+        s_int32 target_y = 0;
+        for (s_int32 src_y = factor/2; src_y < height(); src_y += factor)
+        {
+            s_int32 target_x = 0;
+            for (s_int32 src_x = factor/2; src_x < length(); src_x += factor)
+            {
+                u_int32 px = get_pix (src_x, src_y);
+                target->put_pix (target_x, target_y, px);
+                target_x++;
+            }
+            target_y++;
+        }
 
         target->unlock();
         unlock();
@@ -322,7 +348,7 @@ namespace gfx
         }
         else
         {
-            fprintf (stderr, "*** surface:resize: screen surface not initialized!\n");
+            LOG(ERROR) << "screen surface not initialized!";
         }
     }
 
@@ -390,17 +416,14 @@ namespace gfx
         if (draw_to)
         { 
             drawing_area im_zone (x, y, sl, sh);
-            drawing_area da_int = draw_to->setup_rects ();
+            im_zone.assign_drawing_area (draw_to);
 
-            im_zone.assign_drawing_area (&da_int);
-            da_int = im_zone.setup_rects ();
-            SDL_Rect tr;
-            tr.x = da_int.x();
-            tr.y = da_int.y();
-            tr.w = da_int.length();
-            tr.h = da_int.height();
+            drawing_area da_int = im_zone.setup_rects ();
+            dstrect.x = da_int.x();
+            dstrect.y = da_int.y();
+            dstrect.w = da_int.length();
+            dstrect.h = da_int.height();
 
-            dstrect = tr; 
             srcrect = dstrect;
             srcrect.x = x < dstrect.x ? sx + dstrect.x - x : sx;
             srcrect.y = y < dstrect.y ? sy + dstrect.y - y : sy;
@@ -416,6 +439,6 @@ namespace gfx
 
             dstrect.x = x;
             dstrect.y = y;
-        } 
+        }
     }
 }

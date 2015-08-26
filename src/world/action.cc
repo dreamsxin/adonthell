@@ -25,10 +25,10 @@
  */
 
 
-#include "world/action.h"
-#include "python/pool.h"
-#include "world/character.h"
-#include "world/object.h"
+#include "action.h"
+#include <adonthell/python/pool.h>
+#include "character.h"
+#include "object.h"
 
 
 using world::action;
@@ -88,14 +88,17 @@ void action::execute (PyObject *actor, PyObject *target)
     if (Action != NULL)
     {
         // prepare arguments
-        PyTuple_SET_ITEM (Args, 0, actor);
-        PyTuple_SET_ITEM (Args, 1, target);
+        PyTuple_SetItem (Args, 0, actor);
+        PyTuple_SetItem (Args, 1, target);
         
         Action->execute (Args);
         
         // reset
-        PyTuple_SET_ITEM (Args, 0, Py_None);
-        PyTuple_SET_ITEM (Args, 1, Py_None);
+        Py_INCREF(Py_None);
+        Py_INCREF(Py_None);
+
+        PyTuple_SetItem (Args, 0, Py_None);
+        PyTuple_SetItem (Args, 1, Py_None);
     }
 }
 

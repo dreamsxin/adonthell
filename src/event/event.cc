@@ -27,11 +27,32 @@
  */
 
 #include <cstdio>
-#include "event/event.h"
-#include "event/types.h"
+#include "event.h"
+#include "types.h"
+#include "date.h"
+#include "time_event_manager.h"
+
+#include <adonthell/base/savegame.h>
 
 using events::event;
 using events::event_type;
+
+// time_event manager instance that is initialized when the event package is loaded
+static events::time_event_manager *TimeEventManager = NULL;
+
+void events::init(base::configuration & cfg)
+{
+    TimeEventManager = new events::time_event_manager;
+    base::savegame::add (new base::serializer<events::date> ());
+}
+
+void events::cleanup()
+{
+    events::date::cleanup();
+
+    delete TimeEventManager;
+    TimeEventManager = NULL;
+}
 
 // constructor
 event::event ()
@@ -58,7 +79,7 @@ void event::put_state (base::flat & file) const
 bool event::get_state (base::flat & file) 
 {
     // Note that 'Type' is already read by listener::get_state 
-    // to determine what event subclass to instanciate
+    // to determine what event subclass to instantiate
     Repeat = file.get_sint32 ("erp");
     
     return file.success ();

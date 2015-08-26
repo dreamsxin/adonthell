@@ -27,8 +27,8 @@
 #ifndef GUI_UI_EVENT_H
 #define GUI_UI_EVENT_H
 
-#include "event/event.h"
-#include "gui/widget.h"
+#include <adonthell/event/event.h>
+#include "widget.h"
 
 namespace gui
 {
@@ -41,6 +41,11 @@ namespace gui
     class ui_event : public events::event
     {
     public:
+
+        /**
+         * Source for listeners that want to listen to events of a given type from any source.
+         */
+        static const unsigned int ANY_SOURCE = 0x1; // definitely not a valid pointer
 
         /**
          * @name Initialization
@@ -75,7 +80,7 @@ namespace gui
         bool equals (const events::event* e) const
         {
             const ui_event *evt = (const ui_event *) e;
-            return Source == evt->source () && Action == evt->action();
+            return (Source == evt->source () || (uint64_t)Source == ANY_SOURCE) && Action == evt->action();
         }
 
 #ifndef SWIG

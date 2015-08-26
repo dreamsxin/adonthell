@@ -35,7 +35,7 @@
 
 #include <list> 
 
-#include "input/listener.h"
+#include "listener.h"
 
 namespace input
 {
@@ -108,7 +108,7 @@ namespace input
         static void (*update_p)();
         static void (*textinput_p)(bool);
         
-        friend bool input::init(const std::string &);
+        friend bool init(const std::string &);
     }; 
 }
 

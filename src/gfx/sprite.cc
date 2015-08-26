@@ -27,11 +27,11 @@
  * @brief  Defines the sprite global interface.
  */
 
-#include "gfx/sprite.h"
-#include "base/base.h"
-#include "base/diskio.h"
-#include "event/date.h"
-#include "event/time_event.h"
+#include "sprite.h"
+#include <adonthell/base/base.h>
+#include <adonthell/base/diskio.h>
+#include <adonthell/event/date.h>
+#include <adonthell/event/time_event.h>
 
 using namespace std;
 
@@ -271,6 +271,11 @@ namespace gfx
             
             // dump it out to a file
             return animation.put_record (filename);
+        }
+        else
+        {
+            // simple sprite, skip successfully
+            return true;
         }
     }
     

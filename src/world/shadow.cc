@@ -25,10 +25,10 @@
  * 
  */
 
-#include "gfx/surface_cacher.h"
-#include "world/shadow.h"
-#include "world/chunk_info.h"
-#include "base/logging.h"
+#include <adonthell/gfx/surface_cacher.h>
+#include "shadow.h"
+#include "chunk_info.h"
+#include <adonthell/base/logging.h>
 
 using gfx::drawing_area;
 using world::shadow;
@@ -78,7 +78,7 @@ void shadow::reset ()
 // cast shadow on a "floor" object
 void shadow::cast_on (chunk_info* ci)
 {
-    VLOG(1) << Remaining.size() << " " << ci << " " << ci->Min << "-" << ci->Max;
+    VLOG(4) << Remaining.size() << " " << ci << " " << ci->Min << "-" << ci->Max;
 
     // are there parts of the shadow remaining at all?
     if (Remaining.size() > 0)
@@ -90,7 +90,7 @@ void shadow::cast_on (chunk_info* ci)
         
         // distance between object and its shadow
         s_int32 distance = Pos->z() - ci->solid_max().z();
-        VLOG(3) << "Total distance " << distance;
+        VLOG(4) << "Total distance " << distance;
 
         for (placeable::iterator i = object->begin(); i != object->end(); i++)
         {
@@ -98,7 +98,7 @@ void shadow::cast_on (chunk_info* ci)
             if (!shape || !shape->is_solid()) continue;
 
             s_int32 shape_distance = Pos->z() - ci->center_min().z() - shape->z() - shape->height();
-            VLOG(3) << "Shape distance " << shape_distance;
+            VLOG(4) << "Shape distance " << shape_distance;
 
             // this seems a sensible thing to do, but it will break
             // the shadow on sloped surfaces, where the character will

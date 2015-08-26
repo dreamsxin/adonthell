@@ -29,7 +29,7 @@
 #endif
 
 #include <sstream> 
-#include "gfx/sdl/screen_sdl.h"
+#include "screen_sdl.h"
 
 /// color mask for transparency
 u_int32 trans_color = 0;
@@ -82,7 +82,7 @@ void gfx_screen_update()
 {
     if (shadow_surface)
     {
-        shadow_surface->scale (display, base::Scale);
+        shadow_surface->scale_up (display, base::Scale);
     }
 
     SDL_Flip (display->get_vis());

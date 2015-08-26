@@ -32,8 +32,8 @@
 #include <string>
 #include <vector>
 
-#include "base/flat.h"
-#include "base/logging.h"
+#include <adonthell/base/flat.h>
+#include <adonthell/base/logging.h>
 
 namespace audio {
 
@@ -47,7 +47,8 @@ namespace audio {
         /**
          * Constuctors
          */
-        sound () {}
+        sound () : m_filename(""), m_sample(NULL), m_channel(-1), m_forcedhalt(false)
+        { }
 
         sound (const std::string &filename);
 
@@ -133,7 +134,7 @@ namespace audio {
         void * m_sample;
         /// the channel the sound is playing on
         int m_channel; 
-        /// Was this sound stoped by the user
+        /// Was this sound stopped by the user
         bool m_forcedhalt;
 
         //Functions from the audio backend
@@ -150,7 +151,7 @@ namespace audio {
 
         bool handle_channel_create(void);
 
-        friend bool audio::init(const std::string &);
+        friend bool init(const std::string &);
 
         /// Opens the sound file and sets up the object
         void open_file(void);

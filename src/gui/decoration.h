@@ -28,9 +28,9 @@
 
 #include <vector>
 
-#include "base/hash_map.h"
-#include "base/flat.h"
-#include "gfx/drawing_area.h"
+#include <adonthell/base/hash_map.h>
+#include <adonthell/base/flat.h>
+#include <adonthell/gfx/drawing_area.h>
 
 namespace gfx
 {
@@ -207,6 +207,10 @@ public:
         CurrentState = Decoration.end();
         FocusOverlay = Decoration.end();
 
+        FileName = "<default>";
+        CurrentStateName = "";
+        HasFocus = false;
+
         init ();
     }
     
@@ -323,6 +327,19 @@ private:
     decoration_map::const_iterator CurrentState;
     /// decoration by state
     decoration_map Decoration;
+
+    /*
+     * @name Members required for logging only.
+     */
+    //@{
+    /// file the decoration was loaded from
+    std::string FileName;
+    /// name of current state
+    std::string CurrentStateName;
+    /// whether focus overlay is active
+    bool HasFocus;
+    //@}
+
     /// a border of thickness 0
     static gfx::drawing_area EMPTY_BORDER;
 };

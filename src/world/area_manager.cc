@@ -26,8 +26,8 @@
 
 #include <fstream>
 
-#include "base/savegame.h"
-#include "world/area_manager.h"
+#include <adonthell/base/savegame.h>
+#include "area_manager.h"
 
 using world::area_manager;
 
@@ -51,6 +51,7 @@ std::hash_set<std::string> area_manager::TaintedMaps;
 // reset area manager
 void area_manager::cleanup ()
 {
+    delete ActiveMap;
     ActiveMap = NULL;
     PathFinder.clear ();
     MapView.clear ();
@@ -108,6 +109,11 @@ bool area_manager::save (const std::string & path)
     }
     
     // save current map
+    if (!ActiveMap)
+    {
+        LOG(ERROR) << "*** area_manager::save: no active map!";
+        return false;
+    }
     result &= ActiveMap->save (path + "/" + ActiveMap->filename());
     
     // save world data

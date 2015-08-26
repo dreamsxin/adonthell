@@ -4,12 +4,16 @@
 
 using std::string;
 
-#include "base/base.h"
-#include "event/factory.h"
-#include "gfx/gfx.h"
-#include "input/input.h"
-#include "gui/gui.h"
-#include "main/adonthell.h"
+#include <adonthell/base/base.h>
+#include <adonthell/event/factory.h>
+#include <adonthell/gfx/gfx.h>
+#include <adonthell/input/input.h>
+#include <adonthell/gui/ui_event.h>
+#include <adonthell/gui/option.h>
+#include <adonthell/gui/textbox.h>
+#include <adonthell/gui/canvas.h>
+#include <adonthell/gui/window_manager.h>
+#include <adonthell/main/adonthell.h>
 
 class InputHandler {
 private:
@@ -45,7 +49,6 @@ class GuiTest : public adonthell::app {
   }
   void print(const events::event *evt) {
       const gui::ui_event *e = (const gui::ui_event*)evt;
-      gui::button *btn = (gui::button*) e->source();
 
       char* s = (char *) e->user_data();
       std::cout << s << " pressed\n";
@@ -53,7 +56,7 @@ class GuiTest : public adonthell::app {
   int main () {
     
     // Initialize the gfx and input systems
-    init_modules (GFX | INPUT);
+    init_modules (GFX | INPUT | GUI);
 
     InputHandler ih;
         
@@ -138,7 +141,7 @@ class GuiTest : public adonthell::app {
 	b2.set_color(screen->map_color(0xff,0,0,0xff));
     string ls = "I am typing a very long string that will not fit all the way within the alloted space";
 
-    ::gui::window_manager::add(0, 0, &widgets);
+    ::gui::window_manager::add(0, 0, widgets);
 
     while (!ih.letsexit)
     {

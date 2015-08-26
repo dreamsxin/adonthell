@@ -36,8 +36,8 @@
 #include <list>
 #include <string>
 
-#include "base/types.h"
-#include "base/serializer.h"
+#include "types.h"
+#include "serializer.h"
 
 namespace base
 {
@@ -145,7 +145,7 @@ namespace base
             NEW_SAVE = -4,
             INITIAL_SAVE = -3,
             AUTO_SAVE = -2,
-            QUICK_SAVE = -1,
+            QUICK_SAVE = -1
         };
         
         /**
@@ -176,7 +176,7 @@ namespace base
          */
         u_int32 count () const
         {
-            return Games.size() - SPECIAL_SLOT_COUNT;
+            return Games().size() - SPECIAL_SLOT_COUNT;
         }
         
         /**
@@ -219,6 +219,11 @@ namespace base
          * the current game.
          */
         static void init ();
+
+        /**
+         * Shutdown savegame system and free all static resources..
+         */
+        static void cleanup();
 
         /**
          * Register a serializer for saving/loading game data.
@@ -269,7 +274,7 @@ namespace base
         /// the slot the current game is running from
         static s_int32 CurrentSlot;
         /// list of available saved games
-        static std::vector<savegame_data*> Games;
+        static std::vector<savegame_data*>& Games();
         /// classes that read write game data
         static std::list<base::serializer_base*>& Serializer();
         /// notify about load/save progress

@@ -28,8 +28,8 @@
 #ifndef RPG_CHARACTER_H
 #define RPG_CHARACTER_H
 
-#include "rpg/specie.h"
-#include "rpg/pathfinding_costs.h"
+#include "pathfinding_costs.h"
+#include "faction.h"
 
 namespace rpg
 {
@@ -61,23 +61,17 @@ namespace rpg
              * @param name the characters name
              * @param id unique id under which the character will be available in global %character storage.
              * @param type the characters type (PLAYER, NPC or CREATURE)
-             * @param race name of the race to which the character belongs
-             * @param body representation of this character on the world side
+             * @param specie name of the race to which the character belongs
              */
             character (const std::string & name, const std::string & id, const rpg::char_type & type,
                        const std::string & specie);
 
             /**
-             * Delete character and remove it from the global character storage.
-             */
-            virtual ~character ();
-
-            /**
-             * Convenience method to instanciate a character template. Its usage is
+             * Convenience method to instantiate a character template. Its usage is
              * preferred over script::create_instance ().
              * @param templ name of the item template without .py extension
              * @param args argument tuple to pass to the template's constructor
-             * @return \b true if instanciated successful, \b false otherwise.
+             * @return \b true if instantiated successful, \b false otherwise.
              */
             bool create_instance (const std::string & templ, PyObject * args = NULL)
             {
@@ -160,68 +154,40 @@ namespace rpg
                 Dialogue = dialogue;
             }
             //@}
-            
-            /**
-             * Return pointer to specie of this %character
-             * @return specie to which this %character belongs
-             */
-            rpg::specie * specie () const
-            {
-                return Specie;
-            }
-            
-            /**
-             * Sets the specie of this %character
-             * @param name the name of the new specie
-             */
-            void set_specie(const std::string & name)
-            {
-                Specie = rpg::specie::get_specie(name);
-                if (Specie == NULL)
-                {
-                    fprintf(stderr, "*** character: '%s' is not a valid specie!\n", name.c_str());
-                }
-                
-                Pathfinding_Costs.update_costs(Factions, Specie);
-            }
 
-           /**
-            * @name Character's factions access
-            */
-           //@{
-           
-           ///Iterators
-           std::vector<rpg::faction *>::const_iterator begin() const;
-           std::vector<rpg::faction *>::const_iterator end() const;
-           
-           /**
-            * Add faction to this character's list
-            * @param name name of the faction to be added
-            * @return \b true on success, \b false otherwise
-            */ 
-            bool add_faction(const std::string & name);
+            /**
+             * @name Character's factions access
+             */
+            //@{
+            /**
+             * Add faction to this character's list
+             * @param name name of the faction to be added
+             * @return \b true on success, \b false otherwise
+             */
+             bool add_faction(const std::string & name);
             
-           /**
-            * Remove faction from this character's list
-            * @param name name of the faction to be removed
-            * @return \b true on success, \b false otherwise
-            */
+            /**
+             * Remove faction from this character's list
+             * @param name name of the faction to be removed
+             * @return \b true on success, \b false otherwise
+             */
             bool remove_faction(const std::string & name);
-             
-           /**
-            * Get faction by its name
-            * @param name name of the faction to be retrieved
-            * @return pointer to the faction
-            */
-            rpg::faction * get_faction(const std::string & name) const;
-             
-           /**
-            * Calls each faction's estimate_speed and sums the values
-            * This function is probably going to be called from calc_speed on the
-            * python side
-            * @param terrain the type of terrain this character is over
-            * @return sum of all the values
-            */
+
+            /**
+             * Check if character belongs to given faction.
+             * @param name the name of the faction to check.
+             * @return true if the character belongs to the faction,
+             * false otherwise.
+             */
+            bool belongs_to_faction(const std::string & name);
+
+            /**
+             * Calls each faction's estimate_speed and sums the values
+             * This function is probably going to be called from calc_speed on the
+             * python side
+             * @param terrain the type of terrain this character is over
+             * @return sum of all the values
+             */
             s_int32 get_faction_estimate_speed(const std::string & terrain) const;
             //@}
            
@@ -255,7 +221,7 @@ namespace rpg
              */
             s_int16 get_pathfinding_cost(const std::string & terrain) const
             {
-                return Pathfinding_Costs.get_cost(terrain);
+                return PathfindingCosts.get_cost(terrain);
             }
 
             /**
@@ -264,7 +230,7 @@ namespace rpg
              */
             void set_pathfinding_type(const std::string & type)
             {
-                Pathfinding_Costs.set_pathfinding_type(type);
+                PathfindingCosts.set_pathfinding_type(type);
             }
 
             /**
@@ -273,7 +239,7 @@ namespace rpg
              */
             std::string get_pathfinding_type() const
             {
-                return Pathfinding_Costs.get_pathfinding_type();
+                return PathfindingCosts.get_pathfinding_type();
             }
 
             /**
@@ -281,7 +247,7 @@ namespace rpg
              */
             bool has_forced_impassable() const
             {
-                return Pathfinding_Costs.has_forced_impassable();
+                return PathfindingCosts.has_forced_impassable();
             }
 
             /**
@@ -356,8 +322,8 @@ namespace rpg
             //@{
             /**
              * Load %character data of all characters. This will first load the %character
-             * template to instanciate the underlying Python character class. Then it will
-             * restore the actual %character data. If the character is already instanciated,
+             * template to instantiate the underlying Python character class. Then it will
+             * restore the actual %character data. If the character is already instantiated,
              * it will be replaced.
              *
              * @return \b true if loading successful, \b false otherwise.
@@ -373,6 +339,11 @@ namespace rpg
              * @return \b true if saving successful, \b false otherwise.
              */
             static bool save (const string & path);
+
+            /**
+             * Deletes all objects in the internal Character map
+             */
+            static void cleanup();
 
             /**
              * Loads the %character from a stream.
@@ -398,6 +369,10 @@ namespace rpg
              * Create a character instance when loading from file.
              */
             character () {}
+            /**
+             * Delete character.
+             */
+            virtual ~character ();
             
         private:
             /// Type of the character
@@ -412,17 +387,17 @@ namespace rpg
             /// Color used for the character in dialogues
             u_int32 Color;
 
+            /// Name of a sprite displayed during dialogues
+            std::string Portrait;
+
             /// Dialogue script assigned to this character
             std::string Dialogue;
 
-            /// Specie to which this character belongs
-            rpg::specie * Specie;
-            
             /// Vector with the various factions to which this character belongs
             std::vector<rpg::faction *> Factions;
             
             /// Pathfinding Costs of this %character
-            rpg::pathfinding_costs Pathfinding_Costs;
+            rpg::pathfinding_costs PathfindingCosts;
 
             /// Actual speed of this character
             float Speed;
@@ -430,7 +405,7 @@ namespace rpg
             /// Default speed of this character
             float Base_Speed;
 
-            /// list of all characters currently instanciated
+            /// list of all characters currently instantiated
             static std::hash_map<std::string, character*> Characters;
 
             /// id of the character currently controlled by the player

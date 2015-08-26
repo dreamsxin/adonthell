@@ -1,6 +1,6 @@
 #include <iostream>
-#include "base/base.h"
-#include "base/serializer.h"
+#include <adonthell/base/base.h>
+#include <adonthell/base/serializer.h>
 
 
 class calltest
@@ -49,6 +49,11 @@ public:
         std::cout << "Loading state ...\n";
         return true;
     }
+
+    static void cleanup ()
+    {
+        std::cout << "Cleaning up ...\n";
+    }
 };
 
 class calltest2
@@ -64,6 +69,11 @@ public:
     {
         std::cout << "Loading state ...\n";
         return true;
+    }
+
+    void cleanup ()
+    {
+        std::cout << "Cleaning up ...\n";
     }
 };
 

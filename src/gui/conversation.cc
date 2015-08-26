@@ -1,7 +1,10 @@
-#include "gui/conversation.h"
-#include "gui/ui_event.h"
-#include "event/manager.h"
-#include "base/logging.h"
+#include "conversation.h"
+#include "ui_event.h"
+#include "window_manager.h"
+
+#include <adonthell/event/manager.h>
+#include <adonthell/base/logging.h>
+
 #include <iomanip>
 #include <iostream>
 
@@ -56,7 +59,7 @@ namespace gui
 		{
 		    ui_event evt(this, "finished");
 		    events::manager::raise_event(&evt);
-		    window_manager::remove(this);
+		    window_manager::remove(*this);
 			return false;
 		}
 		speaker.set_string(string(line->speaker()) + ":");
@@ -161,4 +164,4 @@ namespace gui
 
         return layout::keyup(k);
 	}
-};
+}

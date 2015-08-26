@@ -26,14 +26,11 @@
 
 #include <algorithm>
 
-#include "world/move_event_manager.h"
-#include "world/move_event.h"
+#include "move_event_manager.h"
+#include "move_event.h"
 
 using world::move_event_manager;
 using world::move_event;
-
-// move_event manager instance that is initialized when the world package is loaded
-static move_event_manager WorldEventManager;
 
 // function returning a new move event
 NEW_EVENT (world, move_event)

@@ -27,7 +27,7 @@
 #ifndef GUI_UI_EVENT_MANAGER_H
 #define GUI_UI_EVENT_MANAGER_H
 
-#include "event/manager_base.h"
+#include <adonthell/event/manager_base.h>
 #include <list>
 
 namespace gui
@@ -71,16 +71,9 @@ namespace gui
          */
         void raise_event (const events::event *evnt);
 
-        /**
-         * Actually trigger all the pending events.
-         */
-        void update ();
-
     private:
         /// storage for registered listeners.
         std::list<events::listener*> Listeners;
-        /// storage for pending events.
-        std::list<events::listener*> Pending;
     };
 }
 

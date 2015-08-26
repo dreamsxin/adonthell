@@ -30,15 +30,15 @@
 #ifndef RPG_ITEM_STORAGE_H
 #define RPG_ITEM_STORAGE_H
 
-#include "rpg/item.h"
-#include "base/hash_map.h"
+#include "item.h"
+#include <adonthell/base/hash_map.h>
 
 using std::string;
 
 namespace rpg
 {
     /**
-     * For efficiency reasons, immutable items are only instanciated once
+     * For efficiency reasons, immutable items are only instantiated once
      * throughout a game. In order to access them, they are kept in a globally
      * available %storage.
      */
@@ -72,7 +72,7 @@ namespace rpg
          * Retrieve immutable %item with given name from the %storage. 
          * Instead of an immutable item's name, one may also pass the file
          * name of a mutable %item. In that case, the mutable %item will be
-         * instanciated and returned.
+         * instantiated and returned.
          * @param name name of the %item to retrieve.
          * @return %item with given name, or \c NULL if no such %item exists.
          */

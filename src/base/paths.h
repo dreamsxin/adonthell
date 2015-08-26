@@ -35,9 +35,9 @@
 #define LT_SCOPE extern
 #endif
 
-#include "ltdl.h"
+#include <ltdl.h>
 
-#include "base/file.h"
+#include "file.h"
 
 namespace base
 {

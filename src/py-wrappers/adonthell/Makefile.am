@@ -1,6 +1,15 @@
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_builddir)
 EXTRA_DIST = py_debug.i py_base.i py_event.i py_gfx.i py_gui.i py_input.i py_audio.i py_main.i py_rpg.i py_world.i CMakeLists.txt
-CLEANFILES = $(top_srcdir)/src/py-wrappers/adonthell/py_*_wrap.cc
+CLEANFILES = $(top_srcdir)/src/py-wrappers/adonthell/py_debug_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_base_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_event_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_gfx_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_gui_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_input_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_audio_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_main_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_rpg_wrap.cc \
+    $(top_srcdir)/src/py-wrappers/adonthell/py_world_wrap.cc
 
 ## Python wrapper files.
 pkgpyexec_PYTHON = __init__.py debug.py base.py event.py gfx.py gui.py input.py audio.py main.py rpg.py world.py
@@ -67,10 +76,9 @@ _gui_la_CXXFLAGS = $(PY_CFLAGS) $(FT2_CFLAGS) $(AM_CXXFLAGS)
 _gui_la_LDFLAGS = -avoid-version -module
 _gui_la_LIBADD =  $(PY_LIBADD) \
 	$(top_builddir)/src/base/libadonthell_base.la   \
-	$(top_builddir)/src/gui//libadonthell_gui.la 	\
-	$(top_builddir)/src/gfx/libadonthell_gfx.la	\
-	$(top_builddir)/src/input/libadonthell_input.la	\
-	$(top_builddir)/src/rpg/libadonthell_rpg.la	\
+	$(top_builddir)/src/gui//libadonthell_gui.la    \
+	$(top_builddir)/src/gfx/libadonthell_gfx.la	    \
+	$(top_builddir)/src/input/libadonthell_input.la \
 	$(PY_RUNTIME) $(FT2_LIBS)
 
 ## Rules to build libpymain (libmain's Python wrapper)
@@ -114,7 +122,7 @@ _debug_la_LIBADD = $(PY_LIBADD) \
 	$(PY_RUNTIME)
 
 ## Swig arguments
-SWIG_ARGS = -python -modern -noexcept -I$(top_srcdir)/src
+SWIG_ARGS = -python -modern -noexcept -I$(top_builddir)
 
 ## Rules for Python wrappers generation
 base.py: py_base_wrap.cc
@@ -163,5 +171,5 @@ __init__.py:
 ## The .pyc are generated so the Python modules are accessible even if
 ## we are using a separate builddir.
 %.pyc: %.py
-	$(PYTHON) -c "import py_compile; py_compile.compile(\"$(srcdir)/$<\", \"./$@\");"
+	$(PYTHON) -c "import py_compile; py_compile.compile(\"$(srcdir)/$(<F)\", \"./$@\");"
 

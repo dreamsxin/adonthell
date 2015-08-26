@@ -1,6 +1,4 @@
 /*
- $Id: collision.cc,v 1.12 2008/10/10 20:37:35 ksterker Exp $
- 
  Copyright (C) 2007 Kai Sterker <kaisterker@linuxgames.com>
  Part of the Adonthell Project http://adonthell.linuxgames.com
  
@@ -27,9 +25,10 @@
  * 
  */
 
+#include <adonthell/base/logging.h>
 #include <cmath>
-#include "world/collision.h"
-#include "world/plane3.h"
+#include "collision.h"
+#include "plane3.h"
 
 using world::collision;
 using world::plane3;
@@ -87,7 +86,7 @@ void collision::check_triangle (const triangle3<s_int16> & triangle, const vecto
         // cache this as we're going to use it a few times below: 
         float normalDotVelocity = trianglePlane.normal ().dot (Velocity);
         
-        // if sphere is travelling parallel to the plane: 
+        // if sphere is traveling parallel to the plane:
         if (normalDotVelocity == 0.0f) 
         {
             // sphere is not embedded in plane --> no collision possible: 
@@ -224,7 +223,10 @@ void collision::check_triangle (const triangle3<s_int16> & triangle, const vecto
             // It does if it's the first hit or the closest 
             if (CollisionFound == false || distToCollision < NearestDistance) 
             { 
-                // Collision information nessesary for sliding 
+                VLOG(3) << "  Pos = " << BasePoint << ", Velocity = " << Velocity;
+                VLOG(3) << "  Collision @ " << collisionPoint << ", distance " << distToCollision;
+
+                // Collision information necessary for sliding
                 NearestDistance = distToCollision;
                 IntersectionPoint = collisionPoint;
                 CollisionFound = true;

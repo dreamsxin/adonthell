@@ -33,8 +33,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "base/types.h"
-#include "python/callback_support.h"
+#include "types.h"
+#include "logging.h"
+#include <adonthell/python/callback_support.h>
 
 using std::string;
 
@@ -542,7 +543,7 @@ namespace base
 	                if (TypeName[i] == name)
 	                    return (data_type) i;
 	            
-	            fprintf (stderr, "*** flat::type_for_name: unknown type '%s' encountered!\n", name.c_str());
+	            LOG(ERROR) << "unknown type '" << name << "' encountered!";
 	            return T_UNKNOWN;
 	        }        
 	        //@}

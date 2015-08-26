@@ -1,6 +1,4 @@
 /*
-   $Id: date.h,v 1.9 2009/04/08 21:52:09 ksterker Exp $
-
    Copyright (C) 2002/2004/2005 Kai Sterker <kaisterker@linuxgames.com>
    Part of the Adonthell Project http://adonthell.linuxgames.com
 
@@ -29,7 +27,7 @@
 #ifndef EVENT_DATE_H
 #define EVENT_DATE_H
 
-#include "base/flat.h"
+#include <adonthell/base/flat.h>
 
 #ifndef SWIG
 /**
@@ -143,6 +141,10 @@ public:
      * @return true on success, false otherwise.
      */
     static bool save (const std::string & path);
+    /**
+     * Cleanup the time, resetting to startup values
+     */
+    static void cleanup ();
     /**
      * Load the state of the %gamedate class from stream.
      * @param file stream to read the state from

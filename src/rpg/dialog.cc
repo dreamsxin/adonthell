@@ -28,8 +28,8 @@
 
 #include <algorithm>
 
-#include "rpg/dialog.h"
-#include "base/nls.h"
+#include "dialog.h"
+#include <adonthell/base/nls.h>
 
 using rpg::dialog_line;
 using rpg::dialog;
@@ -48,7 +48,7 @@ dialog::dialog (rpg::character & npc) : python::script ()
     PyTuple_SET_ITEM (Args, 0, python::pass_instance (rpg::character::get_player()));
     PyTuple_SET_ITEM (Args, 1, python::pass_instance (&npc));
     
-    // instanciate Python dialogue class
+    // instantiate Python dialogue class
     if (!create_instance (DIALOGUE_PACKAGE + dlg, dlg, Args))
     {
         fprintf (stderr, "*** dialog: loading of dialogue '%s' failed!\n", dlg.c_str());

@@ -28,9 +28,9 @@
  */
 
 //#include <stdio.h>
-#include "rpg/item.h"
-#include "rpg/character.h"
-#include "base/diskio.h"
+#include "item.h"
+#include "character.h"
+#include <adonthell/base/diskio.h>
 #include <iostream>
 #include <algorithm>
 
@@ -235,7 +235,7 @@ bool item::get_state (base::flat & file)
     // get template to use for item
     std::string tmpl = record.get_string ("icn");
     
-    // instanciate
+    // instantiate
     if (!create_instance (tmpl)) return false;
 
     // pass file

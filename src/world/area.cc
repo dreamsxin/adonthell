@@ -26,9 +26,9 @@
  *
  */
 
-#include "world/area.h"
-#include "world/character.h"
-#include "world/object.h"
+#include "area.h"
+#include "character.h"
+#include "object.h"
 
 using world::coordinates;
 using world::placeable;
@@ -68,12 +68,12 @@ void area::clear()
 // convenience method for adding object at a known index
 world::chunk_info *area::place_entity (const s_int32 & index, coordinates & pos)
 {
-    if (index >= 0 && index < Entities.size())
+    if (index >= 0 && (size_t)index < Entities.size())
     {
         return chunk::add(Entities[index], pos);
     }
 
-    fprintf (stderr, "*** area::place_entity: no entity at index %i!\n", index);
+    LOG(ERROR) << "area::place_entity: no entity at index " << index << "!";
     return NULL;
 }
 
@@ -91,7 +91,7 @@ void area::update()
 // get entity at given index
 placeable * area::get_entity (const s_int32 & index) const
 {
-    if (index < Entities.size())
+    if (index >= 0 && (size_t)index < Entities.size())
     {
         return Entities[index]->get_object();
     }
@@ -105,10 +105,10 @@ placeable * area::get_entity (const std::string & id) const
     std::hash_map<std::string, world::named_entity*>::const_iterator entity = NamedEntities.find (id);
     if (entity == NamedEntities.end())
     {
-        fprintf (stderr, "*** area::get_entity: entity '%s' doesn't exist!\n", id.c_str());
+        LOG(WARNING) << "area::get_entity: entity '" << id << "' doesn't exist!";
         for (entity = NamedEntities.begin(); entity != NamedEntities.end(); entity++)
         {
-            fprintf (stderr, "  - '%s'\n", entity->first.c_str());
+            LOG(INFO) << "  - '" << entity->first << "'";
         }
         return NULL;
     }
@@ -127,7 +127,7 @@ s_int32 area::add_entity (entity * ety)
         // check that entity is unique
         if (id.length() == 0 || NamedEntities.find (id) != NamedEntities.end ())
         {
-            fprintf (stderr, "*** area::add_entity: entity '%s' already exists!\n", id.c_str());
+            LOG(ERROR) << "area::add_entity: entity '" << id << "' already exists!";
             return -1;
         }
         
@@ -359,7 +359,7 @@ bool area::get_state (base::flat & file)
             }
             default:
             {
-                fprintf (stderr, "*** area::get_state: unknown object type %i\n", type);
+                LOG(ERROR) << "area::get_state: unknown object type " << type;
                 break;
             }
         }
@@ -370,6 +370,7 @@ bool area::get_state (base::flat & file)
             // load its actual data
             std::string modelfile = entity.get_string("model");
             object->load_model (modelfile);
+            object->set_state ("");
         }
         
         // also store invalid objects, to not mess up the indices
@@ -451,10 +452,10 @@ bool area::get_state (base::flat & file)
             entity_data.next (&value, &size, &id);
             pos.set_str (std::string ((const char*) value, size));
             
-            // create a named instance (that will be unique if it is the first) ...
+            // create a named instance (that will be unique if it is the first, shared otherwise) ...
             world::entity *ety = new world::named_entity (object, entity_name, ety_idx == -1);
             // ... and place it on the map
-            chunk_info *ci = place_entity (add_entity (ety), pos);
+            chunk_info *ci = place_entity ((ety_idx = add_entity (ety)), pos);
             
             // location has an action assigned
             if (actn_id != "")
@@ -471,11 +472,13 @@ bool area::get_state (base::flat & file)
                 case world::CHARACTER:
                 {
                     rpg::character *npc = rpg::character::get_character(entity_name);
-                    ((world::character *) object)->set_mind (npc);
                     if (npc == NULL)
                     {
-                        fprintf (stderr, "*** area::get_state: cannot find rpg instance for '%s'.\n", entity_name.c_str());
+                        LOG(ERROR) << "area::get_state: cannot find rpg instance for '" << entity_name << "'.";
                     }
+
+                    ((world::character *) object)->set_mind (npc);
+                    ((world::character *) object)->set (pos.x(), pos.y(), pos.z());
                     break;
                 }
                 default:
@@ -519,26 +522,22 @@ bool area::save (const std::string & fname, const base::diskio::file_format & fo
     if (put_state (record) &&
         record.put_record (fname))
     {
-        Filename = fname;
         return true;
     }
 
-    LOG(ERROR) << "*** area::save: saving '" << fname << "' failed!";
+    LOG(ERROR) << "area::save: saving '" << fname << "' failed!";
     return false;
 }
 
 // load from file
 bool area::load (const std::string & fname)
 {
+    // always remember the filename, just in case we want to save later,
+    // even though we might fail in the load
+    Filename = fname;
+
     // try to load area
     base::diskio record (base::diskio::BY_EXTENSION);
 
-    if (record.get_record (fname) &&
-        get_state (record))
-    {
-        Filename = fname;
-        return true;
-    }
-
-    return false;
+    return record.get_record (fname) && get_state (record);
 }

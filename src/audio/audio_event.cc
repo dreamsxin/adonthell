@@ -26,17 +26,17 @@
  * @brief Implements the audio_event class.
  */
 
-#include "audio/audio_event.h"
+#include "audio_event.h"
 
 using audio::audio_event;
 
-// Save time event to file
+// Save audio event to file
 void audio_event::put_state (base::flat & file) const
 {
     Sample->put_state(file);
 }
 
-// load time event from file
+// load audio event from file
 bool audio_event::get_state (base::flat & file)
 {
     Sample = new sound();

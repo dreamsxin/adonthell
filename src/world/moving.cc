@@ -31,16 +31,16 @@
 
 #include <functional>
 
-#include "world/moving.h"
-#include "world/area.h"
-#include "world/plane3.h"
-#include "world/shadow.h"
-#include "world/move_event.h"
-#include "event/manager.h"
-#include "base/logging.h"
+#include "moving.h"
+#include "area.h"
+#include "plane3.h"
+#include "shadow.h"
+#include "move_event.h"
+#include <adonthell/event/manager.h>
+#include <adonthell/base/logging.h>
 
 #if DEBUG_COLLISION
-#include "gfx/gfx.h"
+#include <adonthell/gfx/gfx.h>
 #endif
 
 using world::moving;
@@ -128,14 +128,12 @@ bool moving::collide_with_objects (collision *collisionData)
     const vector3<s_int32> min (
         x() + (Velocity.x() < 0 ? static_cast<s_int32>(floor (Velocity.x())) : 0), 
         y() + (Velocity.y() < 0 ? static_cast<s_int32>(floor (Velocity.y())) : 0), 
-        z() + (Velocity.z() < 0 ? static_cast<s_int32>(floor (Velocity.z())): 0));
+        z() + (Velocity.z() < 0 ? static_cast<s_int32>(floor (Velocity.z())) : 0));
                           
     const vector3<s_int32> max (
         min.x() + placeable::length() + (Velocity.x () > 0 ? static_cast<s_int32>(ceil (Velocity.x())) : 0),
-        min.y() + placeable::width() + (Velocity.y () > 0 ? static_cast<s_int32>(ceil (Velocity.y())) : 0),
-        min.z() + placeable::height() + (Velocity.z () > 0 ? static_cast<s_int32>(ceil (Velocity.z())) : 0));
-
-    VLOG(3) << "   area " << min << " - " << max;
+        min.y() + placeable::width()  + (Velocity.y () > 0 ? static_cast<s_int32>(ceil (Velocity.y())) : 0),
+        min.z() + placeable::height() + (Velocity.z () > 0 ? static_cast<s_int32>(ceil (Velocity.z())) : 0) - 1);
 
     // get all objects in our path
     const std::list<chunk_info*> & objects = Mymap.objects_in_bbox (min, max);
@@ -144,14 +142,12 @@ bool moving::collide_with_objects (collision *collisionData)
     for (std::list<chunk_info*>::const_iterator i = objects.begin(); i != objects.end(); i++)
     {
         const placeable *object = (*i)->get_object();
-        
+
         // check all models the placeable consists of
         for (placeable::iterator model = object->begin(); model != object->end(); model++)
         {
             // get the model's current shape, ...
             const placeable_shape * shape = (*model)->current_shape ();
-
-            VLOG(3) << "  shape " << (*i)->center_min() + shape->get_min() << " - " << (*i)->center_min() + shape->get_max();
             
             // ... and check if collision occurs
             shape->collide (collisionData, (*i)->center_min());
@@ -178,7 +174,7 @@ vector3<float> moving::execute_move (collision *collisionData, u_int16 depth)
     // check for collision
     if (!collide_with_objects (collisionData))
     { 
-        // if no collision occured, we just move along the velocity
+        // if no collision occurred, we just move along the velocity
         return pos + vel;
     }
     
@@ -199,10 +195,10 @@ vector3<float> moving::execute_move (collision *collisionData, u_int16 depth)
         // move slightly less than collision tells us) 
         collisionData->update_intersection (v.normalize () * veryCloseDistance); 
     }
-    
+
     // determine the sliding plane 
     vector3<float> slidePlaneOrigin = collisionData->intersection (); 
-    vector3<float> slidePlaneNormal = (newBasePoint - slidePlaneOrigin).normalize (); 
+    vector3<float> slidePlaneNormal = (newBasePoint - slidePlaneOrigin).normalize ();
     plane3 slidingPlane (slidePlaneOrigin, slidePlaneNormal);
     
     vector3<float> newDestinationPoint = destinationPoint - slidePlaneNormal * 
@@ -317,15 +313,15 @@ void moving::update_position ()
 #endif
 
     // update position on map, which must be in whole pixels     
-    X = (s_int32) x;
-    Y = (s_int32) y;
-    Z = (s_int32) floor(z);
+    X = (s_int32) round(x);
+    Y = (s_int32) round(y);
+    Z = (s_int32) round(z);
 
     // calculate ground position and update shadow cast by ourself
     calculate_ground_pos ();
             
     // update precise location for next iteration
-    Position.set (x, y, z);
+    Position.set (x, y, z >= GroundPos ? z : GroundPos);
 }
 
 // calculate z position of ground
@@ -362,25 +358,33 @@ void moving::calculate_ground_pos ()
         // sort according to their z-Order
         ground_tiles.sort (z_order());
 
-        // the highest object will be our ground pos
-        ci = ground_tiles.begin ();
-
-        MyShadow->cast_on (*ci);
-
-        // position of character relative to tile
-        s_int32 px = x() - (*ci)->center_min().x();
-        s_int32 py = y() - (*ci)->center_min().y();
-
-        // get ground pos
-        GroundPos = (*ci)->center_min().z() + (*ci)->get_object()->get_surface_pos (px, py);
-
-        // get the terrain, if any
-        Terrain = (*ci)->get_object()->get_terrain();
-
-        // apply remainder of shadow
-        for (ci++; ci != ground_tiles.end(); ci++)
+        // find tile beneath character
+        for (ci = ground_tiles.begin (); ci != ground_tiles.end(); ci++)
         {
             MyShadow->cast_on (*ci);
+
+            // position of character's center relative to tile
+            s_int32 px = x() + placeable::length()/2 - (*ci)->center_min().x();
+            s_int32 py = y() + placeable::width()/2 - (*ci)->center_min().y();
+
+            if (px >= 0 && py >= 0 && px <= (*ci)->get_object()->solid_max_length() && py <= (*ci)->get_object()->solid_max_width())
+            {
+                // the highest object will be our new ground pos
+                GroundPos = (*ci)->center_min().z() + (*ci)->get_object()->get_surface_pos (px, py);
+
+                // get the terrain, if any
+                Terrain = (*ci)->get_object()->get_terrain();
+
+                ci++;
+                break;
+            }
+        }
+
+        // apply remainder of shadow
+        while (ci != ground_tiles.end())
+        {
+            MyShadow->cast_on (*ci);
+            ci++;
         }
     }
     else
@@ -421,8 +425,6 @@ bool moving::update ()
             // notify interested parties about movement on the map
             events::manager::raise_event(&evt);
         }
-
-        VLOG(1) << "Moving to " << Position;
     }
     
     return true; 

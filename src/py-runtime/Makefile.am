@@ -1,12 +1,12 @@
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_builddir)
 EXTRA_DIST = py_runtime.i CMakeLists.txt
-CLEANFILES = $(top_srcdir)/src/py-wrappers/runtime/py_runtime.cc
+CLEANFILES = $(top_srcdir)/src/py-runtime/py_runtime.cc
 
 ## SWIG runtime support
 lib_LTLIBRARIES = libadonthell_py_runtime.la
 
 ## the swig runtime code
-py_runtime.cc: py_runtime.i Makefile.am
+py_runtime.cc: py_runtime.i $(top_srcdir)/src/py-runtime/Makefile.am
 	$(SWIG) -c++ -noexcept -nocontract -python -modern -module py_runtime -o $(srcdir)/$@ $<
 
 ## Rules to build libadonthell_py_runtime

@@ -25,9 +25,9 @@
  * 
  */
 
-#include "base/logging.h"
-#include "event/manager.h"
-#include "event/listener.h"
+#include <adonthell/base/logging.h>
+#include "manager.h"
+#include "listener.h"
 
 using events::factory;
 using events::listener;
@@ -99,7 +99,7 @@ bool listener::get_state (base::flat & file)
         std::string type = file.get_string ("etp");
         
         // Instanciate an event of the given type
-        Event = event_type::instanciate_event (type);
+        Event = event_type::instantiate_event (type);
  
         // try to load it
         if (Event == NULL || Event->get_state (file) == false)

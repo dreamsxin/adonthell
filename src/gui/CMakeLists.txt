@@ -1,21 +1,23 @@
 # Define the adonthell_gui_SRCS variable containing all required files.
 set(adonthell_gui_SRCS
-	button.cpp
+	button.cc
 	canvas.cc
 	conversation.cc
     decoration.cc
-	font.cpp
+	font.cc
 	fontcache.cc
+	gui.cc
 	indicatorbar.cc
-	label.cpp
+	label.cc
 	layout.cc
     listlayout.cc
-	option.cpp
+	option.cc
 	scrollview.cc
-	textbox.cpp
+	textbox.cc
 	ui_event.cc
 	ui_event_manager.cc
-	widget.cpp
+	widget.cc
+    window.cc
     window_manager.cc
 )
 
@@ -37,6 +39,7 @@ set(adonthell_gui_HEADERS
     ui_event.h
     ui_event_manager.h
 	widget.h
+    window.h
     window_manager.h
 )
 
@@ -51,10 +54,28 @@ target_link_libraries(adonthell_gui
 	adonthell_base
     adonthell_event
 	adonthell_gfx
-	adonthell_input	
-	adonthell_rpg	
+	adonthell_input
+    adonthell_world
 	)
 
+################################
+# Unit tests
+IF(DEVBUILD)
+  add_executable(test_layout test_layout.cc)
+  set_target_properties(test_layout PROPERTIES COMPILE_FLAGS ${LIBFT_CFLAGS})
+  target_link_libraries(test_layout ${TEST_LIBRARIES} ${LIBFT_LIBRARIES} adonthell_gui)
+  add_test(NAME Layout COMMAND test_layout)
+
+  add_executable(test_ui_event_manager test_ui_event_manager.cc)
+  set_target_properties(test_ui_event_manager PROPERTIES COMPILE_FLAGS ${LIBFT_CFLAGS})
+  target_link_libraries(test_ui_event_manager ${TEST_LIBRARIES} ${LIBFT_LIBRARIES} adonthell_gui)
+  add_test(NAME UiEventManager COMMAND test_ui_event_manager)
+
+  add_executable(test_ui_event test_ui_event.cc)
+  set_target_properties(test_ui_event PROPERTIES COMPILE_FLAGS ${LIBFT_CFLAGS})
+  target_link_libraries(test_ui_event ${TEST_LIBRARIES} adonthell_gui)
+  add_test(NAME UiEvent COMMAND test_ui_event)
+ENDIF(DEVBUILD)
 
 #############################################
 # Install Stuff

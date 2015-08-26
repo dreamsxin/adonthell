@@ -26,16 +26,13 @@
  * @brief   Implements the audio_event_manager class.
  */
 
-#include "audio/audio_event_manager.h"
-#include "audio/audio_event.h"
+#include "audio_event_manager.h"
+#include "audio_event.h"
 #include <algorithm>
 
 using std::list;
 using audio::audio_event_manager;
 using events::event_type;
-
-// time_event manager instance that is initialized when the audio package is loaded
-static audio_event_manager AudioEventManager;
 
 // function returning a new audio event
 NEW_EVENT (audio, audio_event)

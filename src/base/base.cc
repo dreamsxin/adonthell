@@ -25,15 +25,15 @@
  * @brief  Initialization of the base module.
  */
 
-#include "base/base.h"
+#include "base.h"
 
 // global timer and path objects
 namespace base 
 {
     base::paths &Paths(void)
     {
-        static base::paths * Paths = new base::paths();
-        return *Paths;
+        static base::paths Paths;
+        return Paths;
     }
     base::timer Timer;
     u_int8 Scale = 1;

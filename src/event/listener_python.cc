@@ -25,9 +25,9 @@
  * 
  */
 
-#include "base/logging.h"
+#include <adonthell/base/logging.h>
 #include "listener_python.h"
-#include "python/pool.h"
+#include <adonthell/python/pool.h>
 
 using events::listener;
 using events::listener_python;
@@ -51,8 +51,6 @@ listener_python::~listener_python ()
 // set python method to be called when the event occurs
 bool listener_python::connect_callback (const string & file, const string & classname, const string & callback, PyObject *args)
 {
-    u_int16 size;
-    
     // cleanup
     delete Method;
     
@@ -71,35 +69,14 @@ bool listener_python::connect_callback (const string & file, const string & clas
         return false;
     }
     
-    // make sure the given arguments are a tuple
-    if (!args || !PyTuple_Check (args))
-    {
-        if (args) LOG(WARNING) << "listener::connect_callback: argument must be a tuple!";
-        size = 2;
-    }
-    else size = PyTuple_GET_SIZE (args) + 2;
-    
-    // keep old argument tuple, if possible
-    if (!Args || PyTuple_GET_SIZE (Args) != size)
-    {
-        // free old args
-        Py_XDECREF (Args);
-        
-        // prepare callback arguments
-        Args = PyTuple_New (size);
-        
-        // first argument is the listener itself
-        PyTuple_SET_ITEM (Args, 0, python::pass_instance (this));
-    }
-    
-    // second argument will be the event that triggered the callback
-    for (u_int16 i = 2; i < size; i++)
-    {
-        // copy remaining arguments, if any
-        PyObject *arg =  PyTuple_GET_ITEM (args, i-2);
-        Py_INCREF (arg);
-        PyTuple_SET_ITEM (Args, i, arg);
-    }
+    // free old args
+    Py_XDECREF(Args);
+
+    // make room for additional parameters
+    Args = python::pad_tuple(args, 2);
+
+    // first parameter is the listener itself
+    PyTuple_SET_ITEM (Args, 0, python::pass_instance (this));
     
     return true;
 }
@@ -115,22 +92,18 @@ s_int32 listener_python::raise_event (const event* evnt)
 {
     if (Method && Event->repeat ())
     {
-        // make sure that arguments remain valid while the script executes
-        PyObject *args = Args;
-        Py_INCREF (args);
-        
         // event that triggered the script is 2nd argument of callback
-        PyTuple_SET_ITEM (args, 1, python::pass_instance ((event*) evnt));
+        PyTuple_SetItem (Args, 1, python::pass_instance ((event*) evnt));
         
         // adjust repeat count
         Event->do_repeat ();
         
         // execute callback
-        Method->execute (args);
+        Method->execute (Args);
         
         // clean up
-        Py_DECREF (PyTuple_GET_ITEM (args, 1));
-        Py_DECREF (args);
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(Args, 1, Py_None);
     }
     else
     {

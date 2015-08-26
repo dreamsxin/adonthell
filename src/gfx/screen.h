@@ -31,9 +31,9 @@
 #ifndef SCREEN_H_
 #define SCREEN_H_
 
-#include "gfx/surface.h"
-#include "base/base.h"
-#include "base/configuration.h"
+#include "surface.h"
+#include <adonthell/base/base.h>
+#include <adonthell/base/configuration.h>
 
 namespace gfx
 {
@@ -218,8 +218,8 @@ namespace gfx
         static surface * (*get_surface_p)();
         static std::string (*info_p)();
 
-        friend bool gfx::init(const std::string &);
-        friend void gfx::cleanup();
+        friend bool init(const std::string &);
+        friend void cleanup();
     };
 }
 

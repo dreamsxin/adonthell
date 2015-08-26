@@ -27,7 +27,7 @@
  */
 
 #include <algorithm>
-#include "world/chunk.h"
+#include "chunk.h"
 
 using world::chunk;
 using world::chunk_info;
@@ -82,7 +82,8 @@ chunk::chunk () : Min(), Max(), Split()
 // dtor
 chunk::~chunk()
 {
-    clear();
+    // clear chunk recursively
+    chunk::clear();
 }
 
 // add an object to chunk
@@ -298,6 +299,7 @@ world::entity * chunk::remove (const chunk_info & ci)
             Resize = true;
         }
         
+        delete *it;
         Objects.erase (it);
     }
     
@@ -398,7 +400,7 @@ void chunk::objects_in_bbox (const vector3<s_int32> & min, const vector3<s_int32
     std::list<chunk_info *>::const_iterator i;
     for (i = Objects.begin (); i != Objects.end(); i++)
     {
-        if (type & (*i)->get_object()->type() && in_bbox (min, max, (*i)->solid_min(), (*i)->solid_max()))
+        if ((type & (*i)->get_object()->type()) && in_bbox (min, max, (*i)->solid_min(), (*i)->solid_max()))
         {
             result.push_back (*i);
         }

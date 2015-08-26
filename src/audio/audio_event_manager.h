@@ -29,7 +29,7 @@
 #ifndef EVENT_AUDIO_EVENT_MANAGER_H
 #define EVENT_AUDIO_EVENT_MANAGER_H
 
-#include "event/manager_base.h"
+#include <adonthell/event/manager_base.h>
 #include <list>
 
 using events::manager_base;
@@ -76,16 +76,6 @@ namespace audio
          * @param e An %event structure with the current audio clip
          */
         void raise_event (const event *e);
-
-        /**
-         * Register %time events with %event subsystem.
-         */
-        static void init ();
-
-        /**
-         * Remove %time events from %event subsystem.
-         */
-        static void cleanup ();
 
     private:
         /// storage for registered listeners.

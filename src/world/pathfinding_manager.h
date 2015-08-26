@@ -27,6 +27,11 @@
 #ifndef PATHFINDING_MANAGER_H
 #define PATHFINDING_MANAGER_H
 
+#ifdef __clang__
+#include <forward_list>
+using std::forward_list;
+#define slist forward_list
+#else
 #if __GNUG__ > 2
 #include <ext/slist>
 using namespace __gnu_cxx;
@@ -34,10 +39,12 @@ using namespace __gnu_cxx;
 #include <slist>
 using namespace std;
 #endif
-#include "world/pathfinding.h"
-#include "world/pathfinding_task.h"
-#include "world/coordinates.h"
-#include "world/vector3.h"
+#endif // CLANG
+
+#include "pathfinding.h"
+#include "pathfinding_task.h"
+#include "coordinates.h"
+#include "vector3.h"
 
 namespace world
 {
@@ -81,7 +88,7 @@ namespace world
          *         -1 on error
          */
         s_int16 add_task(character * chr, const world::vector3<s_int32> & target,
-                                const character::direction finalDir = character::NONE);
+                                const character::direction & finalDir = character::NONE);
         /**
          * Adds a task
          * @param chr the character to be moved
@@ -93,7 +100,7 @@ namespace world
          */
         s_int16 add_task(character * chr, const world::vector3<s_int32> & target1,
                                 const world::vector3<s_int32> & target2,
-                                const character::direction finalDir = character::NONE);
+                                const character::direction & finalDir = character::NONE);
         /**
          * Adds task
          * @param chr the character to be moved
@@ -103,7 +110,7 @@ namespace world
          *         -1 on error
          */
         s_int16 add_task(character * chr, character * target,
-                                const character::direction finalDir = character::NONE);
+                                const character::direction & finalDir = character::NONE);
 
         /**
          * Adds task
@@ -113,8 +120,8 @@ namespace world
          * @return the id of the task, which can then be used to pause, resume, etc it
          *         -1 on error
          */
-        s_int16 add_task(character * chr, std::string & target,
-                                const character::direction finalDir = character::NONE);
+        s_int16 add_task(character * chr, const std::string & target,
+                                const character::direction & finalDir = character::NONE);
 
         /**
          * Adds a callback to the task that will return failure or success on completion
@@ -125,26 +132,26 @@ namespace world
          * @param callback the callback to run on task completion or
          *        NULL to clear a previously set callback.
          */
-        void set_callback (const s_int16 id, base::functor_1<const s_int32> * callback);
+        void set_callback (const s_int16 & id, base::functor_1<const s_int32> * callback);
 
         /**
          * Set the direction to where the character will point after finishing moving
          * @param id the id of the task to be altered
          * @param finalDir the direction the character will point after finishing moving
          */
-         void set_final_direction(const s_int16 id, const character::direction finalDir);
+         void set_final_direction(const s_int16 & id, const character::direction finalDir);
 
         /**
          * Pauses a task
          * @param the id of the task to be paused
          */
-        void pause_task(const s_int16 id);
+        void pause_task(const s_int16 & id);
 
         /**
          * Resumes a paused task
          * @param id the id of the paused task to be resumed
          */
-        void resume_task(const s_int16 id);
+        void resume_task(const s_int16 & id);
 
         /**
          * Deletes a task. When deleting a task the slot it used will be freed and open to reuse,
@@ -152,7 +159,7 @@ namespace world
          * @param id the id of the task to be deleted
          * @return \b true on success, \b false otherwise
          */
-        bool delete_task(const s_int16 id);
+        bool delete_task(const s_int16 & id);
 
         /**
          * Returns the state of the task. Can be useful for knowing whether the target has been
@@ -160,7 +167,14 @@ namespace world
          * @param id the id of the task
          * @return the state
          */
-        state return_state(const s_int16 id);
+        state return_state(const s_int16 & id);
+
+        /**
+         * Return pathfinding task.
+         * @param id the id of the task
+         * @return the task, or NULL if id is invalid
+         */
+        const pathfinding_task* get_task(const s_int16 & id);
 
         /**
          * Updates every task as needed.
@@ -195,19 +209,24 @@ namespace world
     private:
         /**
          * Handles the low-level stuff of adding tasks
-         * @param all the necessary stuff
+         * @param id the task number
+         * @param chr the character for which we find the task
+         * @param target the lower corner of the target area
+         * @param target2 the upper corner of the target area
+         * @param finalDir the direction the character should face when reaching the goal
          * @return \b false on error, \b true on success
          */
-        bool add_task_ll(const s_int16 id, character * chr, const world::vector3<s_int32> & target,
+        bool add_task_ll(const s_int16 id, character * chr,
+                         const world::vector3<s_int32> & target,
                          const world::vector3<s_int32> & target2,
-                         const u_int8 phase, const u_int8 actualNode, const u_int8 actualDir);
+                         const character::direction & finalDir);
 
         /**
          * Verify if we can add the task and in which slot
-         * @param chr the character
-         * @return a free slot where we can add the task
+         * @return a free slot where we can add the task or -1 of
+         *  no free slot available.
          */
-        s_int16 add_task_sec(const character * chr);
+        s_int16 find_free_task();
 
         /**
          * Handles the movement of the character
@@ -217,17 +236,10 @@ namespace world
          */
         bool move_chr(const s_int16 id);
 
-        /**
-         * Calcs the 2D euclidean distance from 2 points
-         * @param the coordinates of the a node, the character
-         * @return the distance
-         * @note the return value is of type u_int8 because the distance shouldn't
-         * exceed 29 (on a 20x20 grid)
-         */
-        u_int8 calc_distance(const world::coordinates & node, const world::character * chr);
+        bool is_blocked(const world::coordinates & pos, world::character * chr) const;
 
         /// A vector with the tasks
-        std::vector<world::pathfinding_task> m_task;
+        std::vector<world::pathfinding_task*> m_task;
 
         /// Highest slot in use
         s_int16 m_taskHighest;
@@ -237,9 +249,6 @@ namespace world
 
         /// A list containing all the characters in movement
         slist<world::character *> m_chars;
-
-        /// Executes the searchs
-        world::pathfinding m_pathfinding;
     };
 }
 

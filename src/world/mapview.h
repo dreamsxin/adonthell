@@ -33,9 +33,9 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "python/method.h"
-#include "world/renderer.h"
-#include "world/zone.h"
+#include <adonthell/python/method.h>
+#include "renderer.h"
+#include "zone.h"
 
 namespace world
 {
@@ -155,6 +155,28 @@ namespace world
             set_length (length);
             set_height (height);
         }
+
+        /**
+         * Return the map X position at the center of the mapview. Note that
+         * the this might not be the actual center of the view if the position
+         * is near the edge of the map.
+         * @return X position of the map in view.
+         */
+        s_int32 get_x () const
+        {
+            return Pos.x();
+        }
+
+        /**
+         * Return the map Y position at the center of the mapview. Note that
+         * the this might not be the actual center of the view if the position
+         * is near the edge of the map.
+         * @return Y position of the map in view.
+         */
+        s_int32 get_y () const
+        {
+            return Pos.y();
+        }
         
         /**
          * Return the height the mapview is going to display. It might 
@@ -166,6 +188,44 @@ namespace world
             return Pos.z();
         }
         
+        /**
+         * Return the x coordinate of the map, from which the view starts.
+         * @return x coordinate in map's space
+         */
+        s_int32 get_view_start_x () const
+        {
+            return Sx;
+        }
+
+        /**
+         * Return the y coordinate of the map, from which the view starts.
+         * @return y coordinate in map's space
+         */
+        s_int32 get_view_start_y () const
+        {
+            return Sy;
+        }
+
+        /**
+         * Return the x offset of the rendered map within the view.
+         * This is used when map is smaller than the view.
+         * @return offset of the map in the view in x axis.
+         */
+        u_int16 get_view_offset_x () const
+        {
+            return Ox;
+        }
+
+        /**
+         * Return the x offset of the rendered map within the view.
+         * This is used when map is smaller than the view.
+         * @return offset of the map in the view in x axis.
+         */
+        u_int16 get_view_offset_y () const
+        {
+            return Oy;
+        }
+
         /**
          * Smooth transition of the mapview to the new height.
          * @param height the new height to transition to.

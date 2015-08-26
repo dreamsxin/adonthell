@@ -26,16 +26,28 @@
  * @brief Module initialization.
  */
 
-#include "world/world.h"
-#include "world/area_manager.h"
+#include "world.h"
+#include "area_manager.h"
+#include "move_event_manager.h"
+
+#include <adonthell/base/savegame.h>
+
+// move_event manager instance that is initialized when the world package is loaded
+static world::move_event_manager *MoveEventManager;
 
 // start world module
 void world::init (base::configuration & cfg)
 {
+    MoveEventManager = new world::move_event_manager;
+
+    base::savegame::add (new base::serializer<world::area_manager> ());
 }
 
 // shutdown world module
 void world::cleanup ()
 {
     area_manager::cleanup ();
+
+    delete MoveEventManager;
+    MoveEventManager = NULL;
 }

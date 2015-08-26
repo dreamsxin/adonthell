@@ -30,8 +30,8 @@
 #ifndef WORLD_RENDERER_H
 #define WORLD_RENDERER_H
 
-#include "world/chunk_info.h"
-#include "world/render_info.h"
+#include "chunk_info.h"
+#include "render_info.h"
 
 namespace world
 {
@@ -152,6 +152,35 @@ protected:
     
 private:
     void visualize_deadlock (std::list <world::render_info> & render_queue) const;
+};
+
+/**
+ * Renderer that does not try to perform any hidden object removal. Instead
+ * it relies upon fast hardware blitting that isn't impacted much by drawing
+ * some objects that are not visible at all.
+ */
+class hw_renderer : public default_renderer
+{
+public:
+    /**
+     * Draw objects in the given list on screen.
+     * @param x offset on the x-axis.
+     * @param y offset on the y-axis.
+     * @param render_queue list of objects to draw on screen.
+     * @param da clipping rectangle.
+     * @param target surface to draw on, NULL for screen surface.
+     */
+    virtual void render (const s_int16 & x, const s_int16 & y, std::list <world::render_info> & render_queue, const gfx::drawing_area & da, gfx::surface * target) const;
+
+protected:
+    /**
+     * Check if an object overlaps any other object in the view.
+     * @param obj object to check.
+     * @param begin begin of list of objects to check against
+     * @param end end of list of objects to check against
+     * @return whether to draw or skip object.
+     */
+    u_int32 can_draw_object (render_info & obj, const_iterator & begin, const_iterator & end) const;
 };
 
 /**

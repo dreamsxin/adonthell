@@ -27,7 +27,7 @@
  */
 
 
-#include "audio/audio_manager.h"
+#include "audio_manager.h"
 
 namespace audio
 {
@@ -37,9 +37,6 @@ namespace audio
     u_int16 audio_manager::audio_format_;
     int     audio_manager::audio_mixchannels_;
     int     audio_manager::audio_rate_;
-
-    std::string audio_manager::sound_dir_;
-
 
     bool audio_manager::set_audio_buffers(const int audio_buffers) {
         LOG(INFO) << "set_audio_buffers(" << audio_buffers << "); was: "

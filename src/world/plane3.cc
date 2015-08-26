@@ -1,6 +1,4 @@
 /*
- $Id: plane3.cc,v 1.3 2007/12/15 23:15:10 ksterker Exp $
- 
  Copyright (C) Kai Sterker <kaisterker@linuxgames.com>
  Part of the Adonthell Project http://adonthell.linuxgames.com
  
@@ -27,7 +25,7 @@
  * 
  */
 
-#include "world/plane3.h"
+#include "plane3.h"
 
 using world::plane3;
 
@@ -40,14 +38,14 @@ plane3::plane3 (const triangle3<float> & triangle)
     Equation[A] = Normal.x ();
     Equation[B] = Normal.y ();
     Equation[C] = Normal.z ();
-    Equation[D] = -(Normal.dot (Origin)); 
+    Equation[D] = -(Normal.dot (Origin));
 }
 
 // another ctor
 plane3::plane3 (const vector3<float> & origin, const vector3<float> & normal)
 {
     Origin = origin;
-    Normal = normal.normalize ();
+    Normal = normal;
     
     Equation[A] = Normal.x ();
     Equation[B] = Normal.y ();

@@ -31,7 +31,7 @@
 #ifndef SURFACE_EXT_H
 #define SURFACE_EXT_H
 
-#include "gfx/surface.h"
+#include "surface.h"
 
 namespace gfx
 {
@@ -87,7 +87,7 @@ public:
     //@}
 
 #ifndef SWIG
-    GET_TYPE_NAME_VIRTUAL(gfx::surface_ext)
+    GET_TYPE_NAME_VIRTUAL(gfx::surface_ext);
 #endif // SWIG
     
 protected:

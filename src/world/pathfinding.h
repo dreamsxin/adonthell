@@ -27,11 +27,11 @@
 #ifndef WORLD_PATHFINDING_H
 #define WORLD_PATHFINDING_H
 
-#include "world/node_cache.h"
-#include "world/node_bank.h"
-#include "world/open_list.h"
-#include "world/character.h"
-#include "world/coordinates.h"
+#include "node_cache.h"
+#include "node_bank.h"
+#include "open_list.h"
+#include "character.h"
+#include "coordinates.h"
 
 namespace world
 {
@@ -44,36 +44,48 @@ namespace world
     public:
 
         /**
-         * Finds the path, if possible, and adds it to the vector passed
+         * Inits path calculator.
          * @param chr character to move
-         * @param goal goal position
+         * @param goal1 lower position of goal area
+         * @param goal2 upper position of goal area
+         * @return number of game cycles to use for updating path
+         */
+        u_int16 init (character *chr, const vector3<s_int32> & goal1, const vector3<s_int32> & goal2);
+
+        /**
+         * Calculates the path, if possible, and adds it to the vector passed
+         * @param chr character to move
+         * @param goal1 lower position of goal area
+         * @param goal2 upper position of goal area
          * @param path (empty) vector to be filled with the path
          * @return \b true on success, \b false on failure
          */
-        bool find_path(const character * chr, const vector3<s_int32> & goal1, const vector3<s_int32> & goal2,
+        bool find_path(character *chr, const vector3<s_int32> & goal1, const vector3<s_int32> & goal2,
                        std::vector<coordinates> * path);
+
+        /**
+         * Resets the node bank, node cache and open list, so that it can be used again
+         * for the next path calculation.
+         */
+        void reset()
+        {
+            m_openList.reset();
+            m_nodeCache.reset();
+            m_nodeBank.reset();
+        }
 
     private:
 
         /**
-         * Resets the node bank, node cache and open list. So that it can be used again.
-         */
-        void reset()
-        {
-            m_nodeBank.reset();
-            m_nodeCache.reset();
-            m_openList.reset();
-        }
-
-        /**
          * Verifies if the goal has been completed
+         * @param chr the character for which the path search is executed
          * @param actual coordinate with the actual position
          * @param p1 vector3 representing the left-top-most point of the goal area
          * @param p2 vector3 representing the right-bottom-most point of the goal area
          * @return \b true if the goals has been completed, \b false otherwise
          */
-         bool verify_goal(const coordinates & actual, const vector3<s_int32> & p1,
-                          const vector3<s_int32> & p2);
+         bool verify_goal(const character *chr, const coordinates & actual,
+                          const vector3<s_int32> & p1, const vector3<s_int32> & p2);
 
         /**
          * Calculates the heuristics of two points
@@ -85,11 +97,11 @@ namespace world
 
         /**
          * Returns the 8 adjacent nodes to the one given
-         * @param goal the coordinates of the central node
+         * @param current the central node
          * @param chr the character used in the pathfinding search
          * @return a vector with the coordinates of the adjacent nodes
          */
-        std::vector<coordinates> calc_adjacent_nodes(const coordinates & goal, const character * chr) const;
+        std::vector<path_coordinate> calc_adjacent_nodes(const node & current, const character * chr) const;
 
         /**
          * Checks if the node is acceptable for use depending on the character's pathfinding_costs
@@ -97,7 +109,47 @@ namespace world
          * @param chr the character used in the pathfinding search
          * @return \b true if the node is valid, \b false otherwise
          */
-        bool check_node(coordinates & temp, const character * chr) const;
+        bool check_node(path_coordinate & temp, const character * chr) const;
+
+        /**
+         * Removes all completely non-solid object from the given list
+         * and returns whether the list is empty afterwards.
+         * @param objects list of map objects
+         * @return true if all objects in the list were non-solid (or if
+         *  the list was empty to begin with).
+         */
+        bool discard_non_solid(std::list<chunk_info*> & objects);
+
+        /**
+         * Check if the given ground tiles form a stair (or slope) in the
+         * direction the path takes.
+         * @param ground_tiles the list of ground tiles at path position
+         * @param min the lower left corner of the position
+         * @param max the upper right corner of the position
+         * @param current the node the path extends to.
+         * @param height height of the character doing the pathfinding
+         * @return true if stairs are found, false otherwise.
+         */
+        bool is_stairs (std::list<chunk_info*> & ground_tiles, const vector3<s_int32> & min, const vector3<s_int32> & max, node *current, const s_int32 & height) const;
+
+        /**
+         * Check if there is a hole in the ground at the given position
+         * @param ground_tiles the list of ground tiles at path position
+         * @param min the lower left corner of the position
+         * @param max the upper right corner of the position
+         * @return true part of the ground is not covered
+         */
+        bool is_hole (std::list<chunk_info*> & ground_tiles, const vector3<s_int32> & min, const vector3<s_int32> & max) const;
+
+        /**
+         * Get the ground position from the list of tiles below the current path
+         * @param ground_tiles list of tiles at the current node of the path
+         * @param pos coordinate of node
+         * @return the ground level
+         */
+        s_int32 get_ground_pos (std::list<chunk_info*> & ground_tiles, const vector3<s_int32> & pos) const;
+
+        void paint_node(node *actual_node, const u_int32 & color) const;
 
         /// The node bank
         node_bank m_nodeBank;
@@ -106,8 +158,6 @@ namespace world
         /// The open list
         open_list m_openList;
     };
-
-
-};
+}
 
 #endif // WORLD_PATHFINDING_H

@@ -33,9 +33,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "gui/fontcache.h"
-#include "gfx/drawing_area.h"
-#include "gfx/surface_cacher.h"
+#include <adonthell/gfx/drawing_area.h>
+#include <adonthell/gfx/surface_cacher.h>
 
 #ifndef SWIG
 using std::vector;
@@ -252,9 +251,6 @@ namespace gui
         int FontSize;
         /// name of the font
         std::string Name;
-
-        /// stores information about glyphs already loaded
-        static font_cache FontCache;
 	};
 }
 

@@ -31,16 +31,20 @@
 #include <config.h>
 #endif
 
-#include "gfx/gfx.h"
-#include "base/nls.h"
-#include "base/base.h"
-#include "base/savegame.h"
-#include "input/input.h"
-#include "audio/audio.h"
-#include "audio/audio_manager.h"
-#include "python/python.h"
-#include "world/world.h"
-#include "main/adonthell.h"
+#include <adonthell/gfx/gfx.h>
+#include <adonthell/base/nls.h>
+#include <adonthell/base/base.h>
+#include <adonthell/base/savegame.h>
+#include <adonthell/input/input.h>
+#include <adonthell/audio/audio.h>
+#include <adonthell/audio/audio_manager.h>
+#include <adonthell/python/python.h>
+#include <adonthell/world/world.h>
+#include <adonthell/gui/gui.h>
+#include <adonthell/rpg/rpg.h>
+#include <adonthell/event/event.h>
+
+#include "adonthell.h"
 
 using adonthell::app;
 
@@ -58,6 +62,10 @@ app::app ()
 {
     google::InstallFailureSignalHandler();
 	theApp = this;
+	Argc = 0;
+	Argv = NULL;
+	IsRunning = false;
+	Modules = 0;
 }
 
 // dtor
@@ -103,6 +111,11 @@ bool app::init_modules (const u_int16 & modules)
         python::add_search_path (base::Paths().user_data_dir());
     }
 
+    if (m & EVENT)
+    {
+        events::init(Cfg);
+    }
+
     // startup graphics
     if (m & GFX)
     {
@@ -129,12 +142,30 @@ bool app::init_modules (const u_int16 & modules)
         }
     }
 
+    // init role playing stuff
+    if (m & RPG)
+    {
+        rpg::init (Cfg);
+    }
+
     // init map stuff
     if (m & WORLD)
     {
         world::init (Cfg);
     }
     
+    // startup user interface
+    if (m & GUI)
+    {
+        gui::setup (Cfg);
+        if (!gui::init ())
+        {
+           LOG(ERROR) << logging::indent() << "gui::init() failed";
+           logging::decrement_log_indent_level();
+           return false;
+       }
+    }
+
     logging::decrement_log_indent_level();
 
     return true;
@@ -255,8 +286,7 @@ bool app::init ()
         // print message if that fails, but don't panic yet ...
         LOG(ERROR) << logging::indent()
                    << "Error reading engine configuration '"
-                   << Config << ".xml'"
-            ;
+                   << Config << ".xml'";
     }
 
 	/*
@@ -310,12 +340,21 @@ void app::cleanup () const
     // save configuration to disk
     Cfg.write (Config);
 
+    // cleanup savegame system
+    base::savegame::cleanup();
+
     // cleanup modules
     if (Modules & WORLD) world::cleanup ();
+    if (Modules & RPG) rpg::cleanup();
     if (Modules & AUDIO) audio::cleanup ();
     if (Modules & INPUT) input::cleanup ();
+    if (Modules & GUI) gui::cleanup();
     if (Modules & GFX) gfx::cleanup ();
+    if (Modules & EVENT) events::cleanup();
     if (Modules & PYTHON) python::cleanup ();
+
+    // stop logging
+    google::ShutdownGoogleLogging();
 }
 
 // display a help message

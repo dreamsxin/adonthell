@@ -24,183 +24,194 @@
  * @brief Handles window order and input.
  */
 
-#include "gui/window_manager.h"
-
-/// the rate of movement for disappearing layouts in pixels
-#define FADERATE 4
+#include <adonthell/world/area_manager.h>
+#include <adonthell/world/vector3.h>
+#include "window_manager.h"
 
 using gui::window_manager;
 
-/// the list of open windows
-std::list<gui::manager_child> window_manager::Windows;
-/// the ui event manager
-gui::ui_event_manager window_manager::EventManager;
+/// the list of open, absolute windows
+std::list<gui::window*> window_manager::Windows;
+/// the list of open, world-relative windows
+std::list<gui::window*> window_manager::WorldRelativeWindows;
+/// storage for pending events.
+std::list<events::listener*> window_manager::PendingEvents;
 
 // render to screen
 void window_manager::update()
 {
-    // fire all pending events
-    EventManager.update();
+    // trigger the event listeners
+    fire_events();
 
-    // draw windows
-    for (std::list<gui::manager_child>::reverse_iterator i = Windows.rbegin(); i != Windows.rend(); i++)
+    /* draw all mapviews
+    for (std::list<gui::mapview_container>::reverse_iterator i = Mapviews.rbegin(); i != Mapviews.rend(); i++)
     {
-        if (i->Fading && fade (*i))
+        i->Map->draw(i->X, i->Y);
+
+        if (FirstWorldRelative != Windows.end()) // skip retrieving mapobjects if not necessary
         {
-            delete i->Child;
-            Windows.remove (*i);
+            // get all objects visible in the mapview
+            std::list<world::chunk_info*> objects_in_mapview = world::area_manager::get_map()->objects_in_view(
+                i->Map->get_view_start_x(),
+                i->Map->get_view_start_y(),
+                i->Map->get_z(),
+                i->Map->length(),
+                i->Map->height()
+            );
+
+            // draw all windows that should be visible in the mapview
+            for (std::list<gui::maprel_window>::reverse_iterator w = MaprelWindows.rbegin(); w != MaprelWindows.rend(); w++)
+            {
+                // Only draw window, if the object it's bound to is visible
+                for (std::list<world::chunk_info*>::iterator ci = objects_in_mapview.begin(); ci != objects_in_mapview.end(); ci++)
+                {
+                    world::entity *en = (*ci)->get_entity();
+                    if(en->has_name() && *(en->id()) == w->Entity_id)
+                    {
+                        world::vector3<s_int32> objpos = (*ci)->center_min();
+                        // The coords: where mapview starts being displayed +
+                        // + (mapobject's coords - coords of mapview's starting map point)
+                        s_int16 coord_x = i->X + i->Map->get_view_offset_x () + objpos.x() + w->Relative_x - i->Map->get_view_start_x();
+                        s_int16 coord_y = i->Y + i->Map->get_view_offset_y () + objpos.y() + w->Relative_y - i->Map->get_view_start_y();
+                        w->Window->draw (coord_x, coord_y, NULL, gfx::screen::get_surface ());
+                        break;
+                    }
+                }
+            }
+        }
+    } */
+
+    // draw all windows
+    std::list<gui::window*>::reverse_iterator i = Windows.rbegin();
+    while (i != Windows.rend())
+    {
+        if ((*i)->fading() && (*i)->fade ())
+        {
+            delete *i;
+            i = std::list<gui::window*>::reverse_iterator(Windows.erase (--(i.base())));
+
+            if (i != Windows.rend())
+            {
+                (*i)->receive_focus();
+            }
+
             continue;
         }
 
-        i->Child->draw (i->x(), i->y(), NULL, gfx::screen::get_surface());
+        switch ((*i)->type())
+        {
+            case WORLD_VIEW:
+            {
+                (*i)->draw();
+                
+                // draw world-relative windows, if any
+                std::list<gui::window*>::reverse_iterator j = WorldRelativeWindows.rbegin();
+                while (j != WorldRelativeWindows.rend())
+                {
+                    if ((*j)->fading() && (*j)->fade ())
+                    {
+                        delete *j;
+
+                        j = std::list<gui::window*>::reverse_iterator(WorldRelativeWindows.erase (--(j.base())));
+                        continue;
+                    }
+                    
+                    (*j)->draw((*i)->display_x(), (*i)->display_y());
+                    j++;
+                }
+                break;
+            }
+            case WORLD_RELATIVE:
+            {
+                // skip over world-relative windows in normal drawing
+                break;
+            }
+            default:
+            {
+                (*i)->draw();
+                break;
+            }
+        }
+
+        i++;
     }
 }
 
-// open window
-void window_manager::add (const u_int16 & x, const u_int16 & y, gui::layout *window, const gui::fadetype & f)
+// open widget as a new window
+void window_manager::add (const u_int16 & x, const u_int16 & y, gfx::drawable & content, const gui::fade_type & f, const gui::window_type & w)
 {
-    // add window at first position of the input queue
-    input::listener *il = new input::listener();
-    input::manager::add (il);
-    input::manager::give_focus (il);
-    
-    // assign listener to window
-    window->set_listener (il);
+    gfx::drawing_area area (x, y, content.length(), content.height());
+    add(new gui::window (content, area, w), f);
+}
 
-    // give focus to new window
-    window->focus();
+// open a new window
+void window_manager::add(window *window, const gui::fade_type & f)
+{
+    if (window->type() == WORLD_RELATIVE)
+    {
+        // relative windows are kept in their own list and may not get focus
+        window->fade_in(f);
+        
+        WorldRelativeWindows.push_front(window);
+    }
+    else
+    {
+        std::list<gui::window*>::iterator i = Windows.begin();
+        for (; i != Windows.end(); i++)
+        {
+            if (window->type() > (*i)->type())
+            {
+                // insert in front of all windows of lower or equal type
+                // note that window-list is sorted in reverse drawing order
+                break;
+            }
+        }
+        
+        if (i != Windows.begin() && i != Windows.end())
+        {
+            // remove focus, if required
+            (*i)->remove_focus();
+        }
+        
+        window->fade_in(f);
+        
+        // acquire focus, if required
+        window->receive_focus();
 
-    gfx::drawing_area pos (x, y, window->length(), window->height());
-    Windows.push_back (manager_child (window, pos, f, true));
+        Windows.insert(i, window);
+    }
 }
 
 // close window
-void window_manager::remove (gui::layout *window, const gui::fadetype & f)
-{
-    input::listener *il = window->get_listener();
-    if (il) input::manager::remove (il);
-    
-    for (std::list<gui::manager_child>::iterator i = Windows.begin(); i != Windows.end(); i++)
+void window_manager::remove (gfx::drawable & content, const gui::fade_type & f)
+{    
+    gfx::drawing_area pos (0, 0, content.length(), content.height());
+    gui::window wnd(content, pos, window_type::INTERFACE);
+
+    for (std::list<gui::window*>::iterator i = Windows.begin(); i != Windows.end(); i++)
     {
-        if (i->Child == window)
+        if (*(*i) == wnd)
         {
-            if (f) i->Fading = f;
-            else i->Fading = PLAIN;
-            i->Showing = false;
+            remove(*i, f);
             return;
         }
     }
 }
 
-// fade layout in or out
-bool window_manager::fade (gui::manager_child & c)
+void window_manager::remove (gui::window *window, const gui::fade_type & f)
 {
-    // initial position
-    if (c.Showing && c.Dx == 0 && c.Dy == 0)
-    {
-        switch (c.Fading)
-        {
-            case LEFT:
-                c.Dx = -c.Pos.length() - c.Pos.x();
-                break;
-            case RIGHT:
-                c.Dx = gfx::screen::length() - c.Pos.x();
-                break;
-            case TOP:
-                c.Dy = -c.Pos.height() - c.Pos.y();
-                break;
-            case BOTTOM:
-                c.Dy = gfx::screen::height() - c.Pos.y();
-                break;
-        }
-    }
-    
-    switch (c.Fading)
-    {
-        case LEFT:
-            if (c.Showing)
-            {
-                c.Dx += FADERATE;
-                if (c.Dx > 0)
-                {
-                    c.Dx = 0;
-                    c.Fading = NONE;
-                }
-            }
-            else
-            {
-                c.Dx -= FADERATE;
-                if (c.Dx + c.Pos.x() + c.Pos.length() < 0)
-                {
-                    return true;
-                }
-            }
-            break;
-        case RIGHT:
-            if (c.Showing)
-            {
-                c.Dx -= FADERATE;
-                if (c.Dx < 0)
-                {
-                    c.Dx = 0;
-                    c.Fading = NONE;
-                }
-            }
-            else
-            {
-                c.Dx+= FADERATE;
-                if (c.Dx + c.Pos.x() > gfx::screen::length())
-                {
-                    return true;
-                }
-            }
-            break;
-        case TOP:
-            if (c.Showing)
-            {
-                c.Dy += FADERATE;
-                if (c.Dy > 0)
-                {
-                    c.Fading = NONE;
-                    c.Dy = 0;
-                }
-            }
-            else
-            {
-                c.Dy -= FADERATE;
-                if (c.Dy + c.Pos.y() + c.Pos.height() < 0)
-                {
-                    return true;
-                }
-            }
-            break;
-        case BOTTOM:
-            if (c.Showing)
-            {
-                c.Dy -= FADERATE;
-                if (c.Dy < 0)
-                {
-                    c.Fading = NONE;
-                    c.Dy = 0;
-                }
-            }
-            else
-            {
-                c.Dy += FADERATE;
-                if (c.Dy + c.Pos.y() > gfx::screen::height())
-                {
-                    return true;
-                }
-            }
-            break;
-        case PLAIN:
-        {
-            c.Fading = NONE;
-            return !c.Showing;
-        }
+    window->remove_focus();
+    window->fade_out(f);
+}
 
-        return false;
+void window_manager::fire_events()
+{
+    // call event handlers
+    for (std::list<events::listener*>::iterator li = PendingEvents.begin(); li != PendingEvents.end(); li++)
+    {
+        (*li)->raise_event ((*li)->get_event());
     }
 
-    return false;
+    // clear list of pending events
+    PendingEvents.clear();
 }

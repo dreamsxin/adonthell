@@ -27,8 +27,8 @@
  * 
  */
 
-#include <event/manager_base.h>
-#include "event/types.h"
+#include "manager_base.h"
+#include "types.h"
 
 using events::event;
 using events::event_type;
@@ -44,10 +44,10 @@ void event_type::register_type (const std::string & name, manager_base *manager,
         Types().push_back (NamedTypes()[name]);
     }
     
-    else if ((*i).second == NULL) 
+    else if (i->second == NULL)
     {
-        (*i).second = new event_type ((u_int8) Types().size(), manager, creator);
-        Types().push_back ((*i).second);
+        i->second = new event_type ((u_int8) Types().size(), manager, creator);
+        Types().push_back (i->second);
     }
 }
 
@@ -57,8 +57,10 @@ void event_type::remove_type (const std::string & name)
     std::hash_map<std::string, event_type*>::iterator i = NamedTypes().find (name);   
     if (i != NamedTypes().end())
     {
-        Types()[(*i).second->id()] = NULL;
-        delete (*i).second;
+        LOG(INFO) << "removing event type '" << name << "' (id = " << (int) i->second->id() << ")";
+
+        Types()[i->second->id()] = NULL;
+        delete i->second;
         NamedTypes().erase (i);
     }
 }
@@ -67,19 +69,19 @@ void event_type::remove_type (const std::string & name)
 u_int8 event_type::get_id (const std::string & name)
 {
     std::hash_map<std::string, event_type*>::iterator i = NamedTypes().find (name);   
-    if (i != NamedTypes().end() && (*i).second != NULL) return (*i).second->id ();
+    if (i != NamedTypes().end() && i->second != NULL) return i->second->id ();
     
-    fprintf (stderr, "*** event_type::get_id: event type '%s' not registered!\n", name.c_str());
+    LOG(ERROR) << "event type '" << name << "' not registered!";
     return 255;
 }
 
-// instanciate new event of given type
-event *event_type::instanciate_event (const std::string & name)
+// instantiate new event of given type
+event *event_type::instantiate_event (const std::string & name)
 {
     std::hash_map<std::string, event_type*>::iterator i = NamedTypes().find (name);   
-    if (i != NamedTypes().end() && (*i).second != NULL) return (*i).second->instanciate ();
+    if (i != NamedTypes().end() && i->second != NULL) return i->second->instantiate ();
 
-    fprintf (stderr, "*** event_type::instanciate_event: event type '%s' not registered!\n", name.c_str());
+    LOG(ERROR) << "event type '" << name << "' not registered!";
     return NULL;
 }
 
@@ -88,8 +90,8 @@ manager_base *event_type::get_manager (const u_int8 & id)
 {
     if (id < Types().size() && Types()[id] != NULL) return Types()[id]->manager ();
 
-    fprintf (stderr, "*** event_type::get_manager: event id '%i' not registered!\n", id);
-    return NULL;    
+    LOG(WARNING) << "event id '" << (int) id << "' not registered!";
+    return NULL;
 }
 
 // Types of events registered with the event subsystem by name

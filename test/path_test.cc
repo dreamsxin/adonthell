@@ -20,51 +20,50 @@
 
 // #define DEBUG_COLLISION 1
 
-#include "base/base.h"
-#include "base/savegame.h"
-#include "event/date.h"
-#include "gfx/sprite.h"
-#include "gfx/screen.h"
-#include "input/manager.h"
-#include "main/adonthell.h"
-#include "rpg/character.h"
-#include "rpg/specie.h"
-#include "rpg/faction.h"
-#include "world/character.h"
-#include "world/object.h"
-#include "world/area_manager.h"
-#include "gui/window_manager.h"
+#include <adonthell/base/base.h>
+#include <adonthell/base/savegame.h>
+#include <adonthell/event/date.h>
+#include <adonthell/gfx/sprite.h>
+#include <adonthell/gfx/screen.h>
+#include <adonthell/input/manager.h>
+#include <adonthell/main/adonthell.h>
+#include <adonthell/rpg/character.h>
+#include <adonthell/rpg/faction.h>
+#include <adonthell/world/character.h>
+#include <adonthell/world/object.h>
+#include <adonthell/world/area_manager.h>
+#include <adonthell/gui/window_manager.h>
 
 class game_client
 {
 public:
     world::character * path_char; // Character used for pathfinding
-    bool letsexit;
     bool draw_grid;
 	bool draw_bounding_box;
     bool draw_delay;
     bool print_queue;
 	bool screenshot;
+	s_int32 path_task;
 
     game_client()
     {
-        letsexit = false;
         draw_grid = false;
         draw_bounding_box = false;
         draw_delay = false;
         print_queue = false;
         screenshot = false;
+        path_task = -1;
+        path_char = NULL;
 
         // prepare gamedata handling
         // TODO: should probably be integrated directly into the engine,
-        // i.e. into module ialization (adonthell::init_modules),
+        // i.e. into module initialization (adonthell::init_modules),
         // in which case we need to make sure to init modules in the proper
         // order too.
 
         // note: order is important; load EVENT before RPG before WORLD
         base::savegame::add (new base::serializer<events::date> ());
-        // todo: load species
-        // todo: load factions
+        base::savegame::add (new base::serializer<rpg::faction> ());
         base::savegame::add (new base::serializer<rpg::character> ());
         base::savegame::add (new base::serializer<world::area_manager> ());
     }
@@ -77,7 +76,7 @@ public:
         	// quit
             if (kev->key() == input::keyboard_event::ESCAPE_KEY)
             {
-                letsexit = true;
+                adonthell::app::theApp->stop();
             }
             // toggle grid on|off
             if (kev->key() == input::keyboard_event::G_KEY)
@@ -107,11 +106,17 @@ public:
             // start simple pathfinding search
             if (kev->key() == input::keyboard_event::P_KEY)
             {
-                s_int32 tX = rand() % path_char->map().length();
-                s_int32 tY = rand() % path_char->map().height();
-                printf("Rand %d %d\n", tX, tY);
-                world::vector3<s_int32> target(tX, tY, 10);
-                world::area_manager::get_pathfinder()->add_task(path_char, target);
+                const char* zones[] = { "stair-1", "stair-2", "air-1", "air-2", "air-3",
+                        "ground-1", "ground-2", "ground-3",
+                        "cellar-1", "cellar-3", "cellar-3" };
+
+                s_int32 idx = rand() % 11;
+                path_task = world::area_manager::get_pathfinder()->add_task(path_char, zones[idx]);
+                // path_task = world::area_manager::get_pathfinder()->add_task(path_char, "test");
+                if (path_task >= 0)
+                {
+                    printf("Goal is %s\n", zones[idx]);
+                }
             }
         }
 
@@ -128,7 +133,7 @@ public:
 	    srand(time(NULL));
 
         // Initialize the gfx and input systems
-    	init_modules (GFX | INPUT | PYTHON | WORLD);
+    	init_modules (GFX | INPUT | PYTHON | WORLD | GUI);
 
     	// Set video mode
     	gfx::screen::set_fullscreen(false);
@@ -148,17 +153,8 @@ public:
         base::savegame game_mgr;
         game_mgr.load (base::savegame::INITIAL_SAVE);
 
-        // create a specie
-        rpg::specie human("Human");
-        human.get_state("groups/human.specie");
-
-        // create a faction
-        rpg::faction noble("Noble");
-        noble.get_state("groups/noble.faction");
-
         // rpg character instance
         rpg::character *player = rpg::character::get_player();
-        player->set_specie ("Human");
 
         // Add faction to character
         player->add_faction("Noble");
@@ -171,7 +167,6 @@ public:
         gc.path_char->mind()->set_pathfinding_type("Only_on_Wood");
 
         rpg::character *npc = rpg::character::get_character("NPC");
-        npc->set_specie ("Human");
 
         // arguments to map view schedule
         PyObject *args = PyTuple_New (1);
@@ -183,7 +178,10 @@ public:
         world::mapview *mv = world::area_manager::get_mapview();
         mv->set_renderer (&rndr);
 
-	    while (!gc.letsexit)
+        // add mapview to window stack
+        gui::window_manager::add(0, 0, *world::area_manager::get_mapview(), gui::fade_type::NONE, gui::window_type::WORLD_VIEW);
+
+	    while (IsRunning)
     	{
         	u_int16 i;
 
@@ -192,7 +190,6 @@ public:
 	        // {
             input::manager::update();
             events::date::update();
-            world::area_manager::update();
 	        //}
 
             // whether to draw bbox or not
@@ -213,7 +210,9 @@ public:
             }
 
             // render mapview on screen
-            mv->draw (0, 0);
+            base::Timer.update ();
+            gui::window_manager::update();
+            world::area_manager::update();
 
             // stop printing queue contents
             rndr.print_queue (false);
@@ -236,18 +235,26 @@ public:
                 gc.screenshot = false;
 			}
 
-#if DEBUG_COLLISION
-            world::character *mchar = (world::character *) (gc.world.get_entity ("Player"));
-            mchar->debug_collision(160 + (320 - 160)/2, 120 + (240 - 240)/2);
-            // mchar->add_direction(gc.mchar->NORTH);
-#endif
-	        base::Timer.update ();
-            gui::window_manager::update();
+			if (gc.path_task != -1 &&
+			    world::area_manager::get_pathfinder()->return_state(gc.path_task) == world::pathfinding_manager::ACTIVE)
+			{
+			    const world::pathfinding_task *task = world::area_manager::get_pathfinder()->get_task(gc.path_task);
+                for (std::vector<world::coordinates>::const_iterator i = task->path.begin(); i != task->path.end(); i++)
+                {
+                    s_int16 x = i->x()*20 - mv->get_view_start_x();
+                    s_int16 y = i->y()*20 - mv->get_view_start_y() - i->z();
+
+                    if (i == task->path.begin() + task->actualNode)
+                        gfx::screen::get_surface()->fillrect (x, y, 20, 20, 0xFF880088);
+                    else
+                        gfx::screen::get_surface()->fillrect (x, y, 20, 20, 0x88FF8888);
+                }
+			}
+
 	        gfx::screen::update ();
 	        gfx::screen::clear ();
 	    }
 
-        rpg::specie::cleanup();
         rpg::faction::cleanup();
 
 	    return 0;

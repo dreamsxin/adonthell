@@ -29,14 +29,14 @@
 #ifndef BASE_SERIALIZER_H
 #define BASE_SERIALIZER_H
 
-#include "base/callback.h"
-#include "python/callback_support.h"
+#include "callback.h"
+#include <adonthell/python/callback_support.h>
 
 namespace base
 {
     /**
      * Wrapper for anything that can be serialized to a file on disk.
-     * It supports static classes, instanciated objects and Python
+     * It supports static classes, instantiated objects and Python
      * classes, as long as those provide the two methods
      *
      * \li bool load()
@@ -55,6 +55,7 @@ namespace base
         {
             delete Save;
             delete Load;
+            delete Cleanup;
         }
         
         /**
@@ -80,7 +81,13 @@ namespace base
             if (!Load) return false;
             return (*Load)();
         }
-        
+
+        void cleanup ()
+        {
+            if (Cleanup)
+                (*Cleanup)();
+        }
+
 #ifndef SWIG
         /// python support
         GET_TYPE_NAME(base::serializer_base);
@@ -95,18 +102,21 @@ namespace base
         {
             Save = NULL;
             Load = NULL;
+            Cleanup = NULL;
         }
         
         /// callback for saving the wrapped object
         base::functor_1ret<const std::string &, bool> *Save;
         /// callback for loading the wrapped object
         base::functor_0ret<bool> *Load;
+        /// callback for cleanup of the wrapped object
+        base::functor_0ret<void> *Cleanup;
     };
     
     /**
-     * Wrapper around static or instanciated class. Called
+     * Wrapper around static or instantiated class. Called
      * py_serializer on Python side (see base.i for specialization).
-     * This class can be instanciated to register at the savegame
+     * This class can be instantiated to register at the savegame
      * class.
      */
     template <class T>
@@ -120,6 +130,7 @@ namespace base
         {
             Save = base::make_functor_ret(&T::save);
             Load = base::make_functor_ret(&T::load);
+            Cleanup = base::make_functor_ret(&T::cleanup);
         }
     
         /**
@@ -133,6 +144,7 @@ namespace base
         {
             Save = base::make_functor_ret(*instance, &T::save);
             Load = base::make_functor_ret(*instance, &T::load);            
+            Cleanup = base::make_functor_ret(*instance, &T::cleanup);
         }
     };
 

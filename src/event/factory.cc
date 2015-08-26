@@ -26,11 +26,11 @@
  * 
  */
 
-#include "base/logging.h"
-#include "event/factory.h"
-#include "event/manager.h"
-#include "event/listener_cxx.h"
-#include "event/listener_python.h"
+#include <adonthell/base/logging.h>
+#include "factory.h"
+#include "manager.h"
+#include "listener_cxx.h"
+#include "listener_python.h"
 #include <algorithm>
 
 using std::vector;
@@ -47,7 +47,13 @@ factory::factory ()
 // destructor
 factory::~factory ()
 {
-    clear (); 
+    for (vector<listener*>::iterator i = Listeners.begin (); i != Listeners.end (); i++)
+    {
+        (*i)->removed_from_factory();
+        delete *i;
+    }
+
+    Listeners.clear();
 }
 
 // Unregisters and deletes all listeners.
@@ -180,8 +186,9 @@ bool factory::get_state (base::flat& file)
         type = state.get_uint8 ("ltp");
 
         // create listener according to desired type
-        if (type == LISTENER_CXX) li = new events::listener_cxx (this, NULL);
-        else li = new events::listener_python (this, NULL);
+        if (type == LISTENER_PYTHON) li = new events::listener_python (this, NULL);
+        else if (type == LISTENER_CXX) li = new events::listener_cxx (this, NULL);
+        else continue;
         
         // get listener data
         if (li->get_state (state))

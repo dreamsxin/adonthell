@@ -28,6 +28,41 @@
 #ifndef LOGGING_H_
 #define LOGGING_H_
 
+#ifdef __clang__
+#undef toupper
+#undef tolower
+#undef isupper
+#undef islower
+#undef isspace
+#undef isalpha
+#undef isalnum
+#endif
+
+#include <sstream>
+
+namespace base
+{
+    /**
+     * Redirect Python stderr to our own logging
+     * implementation. For this to work, an instance
+     * of this class has to be assigned to sys.stderr.
+     */
+    class stderr_to_log
+    {
+    public:
+        /**
+         * Redirect message to log, using level ERROR.
+         * @param msg the message to append to the log.
+         */
+        void write (const char *msg);
+    private:
+        /// buffer log output until we get a linebreak
+        std::ostringstream Buffer;
+    };
+}
+
+#ifndef SWIG
+
 #include <iostream>  // provide std::endl
 #include <string>
 #include <cstdlib>
@@ -65,6 +100,11 @@ namespace google
         }
     }
 
+    inline void ShutdownGoogleLogging()
+    {
+
+    }
+
     class LogMessageVoidify {
     public:
         LogMessageVoidify(const int & logLevel) 
@@ -94,7 +134,7 @@ namespace google
 
 #endif
 
-#include "base/types.h"
+#include "types.h"
 
 /**
  * This module defines basic logging functions
@@ -121,4 +161,5 @@ namespace logging
 
 } // namespace{}
 
+#endif
 #endif

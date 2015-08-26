@@ -23,8 +23,10 @@
  * @brief  Implements the layout class.
  */
 
-#include "gui/layout.h"
-#include "base/logging.h"
+#include "layout.h"
+#include "ui_event.h"
+#include <adonthell/event/manager.h>
+#include <adonthell/base/logging.h>
 
 using gui::layout;
 
@@ -33,80 +35,57 @@ typedef std::vector<gui::layoutchild> vector_layoutchild;
 // select next child
 bool layout::moveright()
 {
-    int old = Selected;
-    do
-    {
-        Selected = (Selected + 1) % Children.size();
-
-        // find a child willing to accept selection
-        if (Children[Selected].Child->focus())
-        {
-            Children[old].Child->unfocus();
-            return true;
-        }
-    }
-    while (Selected != old);
-
-    return false;
+    return select_child(NEXT);
 }
 
 // select next child
 bool layout::movedown()
 {
-    int old = Selected;
-    do
-    {
-        Selected = (Selected + 1) % Children.size();
-
-        // find a child willing to accept selection
-        if (Children[Selected].Child->focus())
-        {
-            Children[old].Child->unfocus();
-            return true;
-        }
-    }
-    while (Selected != old);
-    
-    return false;
+    return select_child(NEXT);
 }
 
 // select previous child
 bool layout::moveleft()
 {
-    int old = Selected;
-    do
-    {
-        Selected = Selected ? Selected - 1 : Children.size() - 1;
-
-        // find a child willing to accept selection
-        if (Children[Selected].Child->focus())
-        {
-            Children[old].Child->unfocus();
-            return true;
-        }
-    }
-    while (Selected != old);
-    
-    return false;
+    return select_child(PREV);
 }
 
 // select previous child
 bool layout::moveup()
 {
-    int old = Selected;
+    return select_child(PREV);
+}
+
+bool layout::select_child(gui::layout::select_direction direction)
+{
+    // no previous child that could possibly receive the focus
+    if (Children.size() < 2) return false;
+
+    u_int32 old = Selected;
     do
     {
-        Selected = Selected ? Selected - 1 : Children.size() - 1;
+        if (direction == NEXT)
+        {
+            Selected = (Selected + 1) % Children.size();
+        }
+        else
+        {
+            Selected = Selected ? Selected - 1 : Children.size() - 1;
+        }
 
         // find a child willing to accept selection
         if (Children[Selected].Child->focus())
         {
             Children[old].Child->unfocus();
+
+            gui::ui_event evt (this, "layout_switch");
+            events::manager::raise_event (&evt);
+
             return true;
         }
     }
     while (Selected != old);
-    
+
     return false;
 }
 
@@ -123,12 +102,12 @@ void layout::draw(const s_int16 & x, const s_int16 & y, const gfx::drawing_area 
     client_area.assign_drawing_area (da);
     
     vector_layoutchild::const_iterator i;
-    int c = 0;
+    u_int32 c = 0;
     
     for (i = Children.begin(); i != Children.end(); ++i, c++)
     {
         // indicate selection of widget, if it wants us to. 
-        (*i).Child->enable_focus (c == Selected && focused);
+        (*i).Child->enable_focus (c == Selected && Focused);
         
         // draw widget at its position
         (*i).Child->draw((*i).Pos.x() + x, (*i).Pos.y() + y, &client_area, target);
@@ -216,19 +195,19 @@ bool layout::focus()
     if (Visible && Children.size())
     {
         // find a child willing to accept being selected
-        s_int32 old = Selected;
+        u_int32 old = Selected;
         do
         {
             if (Children[Selected].Child->focus())
             {
-                focused = true;
+                Focused = true;
                 return true;
             }
             Selected = (Selected + 1) % Children.size();
         }
         while (Selected != old); //it will eventually wrap to where we started
     }
-    focused = false;
+    Focused = false;
     return false;
 }
 
@@ -256,7 +235,10 @@ void layout::remove_child(gui::widget & c)
         if (&c == (*i).Child)
         {
             Children.erase(i);
-            if (Selected == i - Children.begin())
+
+            // we are guaranteed that i != Children.end() here, so
+            // safe to cast the math
+            if (Selected == (u_int32) (i - Children.begin()))
             {
                 //just deleted the selected item.
                 //TODO: what happens if nobody takes focus?

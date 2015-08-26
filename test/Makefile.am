@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_builddir)
 
 SUBDIRS = data
 
@@ -8,11 +8,11 @@ EXTRA_DIST = README audiotest.py dialogtest.py gfxsave.py itemtest.py \
     convert_quests.py inputtest.py searchtest.py serializertest.py \
     convert_graphics.py CMakeLists.txt README.worldtest smallworld.cc
 
-noinst_PROGRAMS = audiotest callbacktest diskiotest guitest inputtest gfxtest worldtest \
+noinst_PROGRAMS = audiotest callbacktest diskiotest guitest inputtest worldtest \
     imagetest path_test
 
 audiotest_SOURCES = audiotest.cc
-audiotest_LDADD   =                                \
+audiotest_LDADD   = $(libglog_LIBS) 			   \
     -L$(top_builddir)/src/base/ -ladonthell_base   \
 	-L$(top_builddir)/src/audio/ -ladonthell_audio
 
@@ -22,7 +22,7 @@ callbacktest_LDADD = -L$(top_builddir)/src/base/ -ladonthell_base
 diskiotest_SOURCES = diskiotest.cc
 diskiotest_LDADD = -L$(top_builddir)/src/base/ -ladonthell_base
 
-guitest_CXXFLAGS = $(FT2_CFLAGS) -I$(top_srcdir)/src $(PY_CFLAGS)
+guitest_CXXFLAGS = $(FT2_CFLAGS) -I$(top_builddir) $(PY_CFLAGS)
 guitest_SOURCES = guitest.cc
 guitest_LDADD = \
 	-L$(top_builddir)/src/python/ -ladonthell_python $(PY_LIBS)\
@@ -33,28 +33,22 @@ guitest_LDADD = \
 	-L$(top_builddir)/src/event/ -ladonthell_event             \
 	-L$(top_builddir)/src/base/ -ladonthell_base               \
 	-L$(top_builddir)/src/main -ladonthell_main                \
-	-L$(top_builddir)/src/rpg/ -ladonthell_rpg			\
+	-L$(top_builddir)/src/rpg/ -ladonthell_rpg				   \
 	-L${top_builddir}/src/world/ -ladonthell_world             \
-	-L$(top_builddir)/src/py-runtime -ladonthell_py_runtime \
+	-L$(top_builddir)/src/py-runtime -ladonthell_py_runtime    \
 	$(FT2_LIBS)
 
 inputtest_SOURCES = inputtest.cc
 inputtest_LDADD = \
 	-L$(top_builddir)/src/python/ -ladonthell_python $(PY_LIBS) \
 	-L$(top_builddir)/src/gfx/ -ladonthell_gfx                  \
+	-L$(top_builddir)/src/gui/ -ladonthell_gui                  \
 	-L$(top_builddir)/src/input/ -ladonthell_input              \
 	-L$(top_builddir)/src/audio/ -ladonthell_audio              \
 	-L$(top_builddir)/src/event/ -ladonthell_event              \
 	-L$(top_builddir)/src/base/ -ladonthell_base                \
 	-L$(top_builddir)/src/main -ladonthell_main                 \
 	-L${top_builddir}/src/world/ -ladonthell_world              \
-	-L$(top_builddir)/src/py-runtime -ladonthell_py_runtime
-
-gfxtest_SOURCES = gfxtest.cc
-gfxtest_LDADD = -L$(top_builddir)/src/base/ -ladonthell_base        \
-	-L$(top_builddir)/src/python/ -ladonthell_python $(PY_LIBS) \
-	-L$(top_builddir)/src/gfx/ -ladonthell_gfx                  \
-	-L$(top_builddir)/src/event/ -ladonthell_event              \
 	-L$(top_builddir)/src/py-runtime -ladonthell_py_runtime
 
 worldtest_CXXFLAGS = $(PY_CFLAGS) $(libglog_CFLAGS) $(AM_CXXFLAGS)

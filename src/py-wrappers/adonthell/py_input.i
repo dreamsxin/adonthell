@@ -3,26 +3,33 @@
 
 %{
 #include <string>
-#include "base/types.h"
-#include "input/input.h"
-#include "python/callback.h"
+#include <adonthell/base/types.h>
+#include <adonthell/input/input.h>
+#include <adonthell/python/callback.h>
 
 using namespace input;
 
+extern "C" {
+    void check_module_version (const char *name, const unsigned int & module_ver);
+}
+%}
+
+%init %{
+    check_module_version (SWIG_name, SWIGVERSION);
 %}
 
 %include "stdint.i"
 %include "std_string.i"
 
-%import "base/types.h"
-%include "input/input.h"
-%include "input/event.h"
-%include "input/keyboard_event.h"
-%include "input/mouse_event.h"
-%include "input/joystick_event.h"
-%include "input/control_event.h"
-%include "input/listener.h"
-%include "input/manager.h"
+%import <adonthell/base/types.h>
+%include <adonthell/input/input.h>
+%include <adonthell/input/event.h>
+%include <adonthell/input/keyboard_event.h>
+%include <adonthell/input/mouse_event.h>
+%include <adonthell/input/joystick_event.h>
+%include <adonthell/input/control_event.h>
+%include <adonthell/input/listener.h>
+%include <adonthell/input/manager.h>
 
 // Class extension to handle Python callbacks
 %extend input::listener

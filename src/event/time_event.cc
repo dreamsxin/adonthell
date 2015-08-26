@@ -27,8 +27,8 @@
  */
 
 #include <cstdio>
-#include "event/time_event.h"
-#include "event/date.h"
+#include "time_event.h"
+#include "date.h"
 
 using events::date;
 using events::time_event;
@@ -53,7 +53,7 @@ void time_event::set_repeat (const string & interval, s_int32 count)
     }
     else
     {
-        fprintf (stderr, "*** time_event::set_repeat: interval '%s' not allowed\n", interval.c_str());
+        LOG(WARNING) << "Interval '" << interval << "' not allowed";
     }
 }
 

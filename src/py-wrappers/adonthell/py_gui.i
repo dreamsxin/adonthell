@@ -2,13 +2,31 @@
 %feature("autodoc", "1");   // enable docstrings for python wrappers
 
 %{
-#include "base/types.h"
-#include "event/event.h"
-#include "gui/gui.h"
-#include "gui/ui_event.h"
-#include "gui/conversation.h"
-#include "gui/window_manager.h"
-#include "python/callback.h"
+#include <adonthell/base/types.h>
+#include <adonthell/event/event.h>
+#include <adonthell/gui/widget.h>
+#include <adonthell/gui/font.h>
+#include <adonthell/gui/label.h>
+#include <adonthell/gui/button.h>
+#include <adonthell/gui/layout.h>
+#include <adonthell/gui/listlayout.h>
+#include <adonthell/gui/canvas.h>
+#include <adonthell/gui/indicatorbar.h>
+#include <adonthell/gui/scrollview.h>
+#include <adonthell/gui/option.h>
+#include <adonthell/gui/textbox.h>
+#include <adonthell/gui/ui_event.h>
+#include <adonthell/gui/conversation.h>
+#include <adonthell/gui/window_manager.h>
+#include <adonthell/python/callback.h>
+
+extern "C" {
+    void check_module_version (const char *name, const unsigned int & module_ver);
+}
+%}
+
+%init %{
+    check_module_version (SWIG_name, SWIGVERSION);
 %}
 
 %include "stdint.i"
@@ -23,12 +41,17 @@ namespace gui {
     // make sure window_manager takes ownership of windows
     %extend window_manager 
     { 
-        static void add(const u_int16 & x, const u_int16 & y, gui::layout *window_disowned, const gui::fadetype & f = NONE) 
+        static void add(const u_int16 & x, const u_int16 & y, gfx::drawable & content, const gui::fade_type & f = NONE, const gui::window_type & w = DIALOG)
         {
-            gui::window_manager::add(x, y, window_disowned, f); 
+            gui::window_manager::add(x, y, content, f, w);
+        }
+        
+        static void add(gui::window *window_disowned, const gui::fade_type & f = NONE)
+        {
+            gui::window_manager::add(window_disowned, f);
         }
     }
-    %ignore window_manager::add; 
+    %ignore window_manager::add;
     
     // make sure layout takes ownership of children
     %extend layout
@@ -86,23 +109,24 @@ namespace gui {
     }
 }
 
-%import "base/types.h"
-%import(module="gfx") "gfx/drawable.h"
-%import(module="event") "event/event.h"
+%import <adonthell/base/types.h>
+%import(module="gfx") <adonthell/gfx/drawable.h>
+%import(module="event") <adonthell/event/event.h>
 
-%include "gui/widget.h"
-%include "gui/font.h"
-%include "gui/label.h"
-%include "gui/button.h"
-%include "gui/layout.h"
-%include "gui/listlayout.h"
-%include "gui/canvas.h"
-%include "gui/indicatorbar.h"
-%include "gui/scrollview.h"
-%include "gui/option.h"
-%include "gui/textbox.h"
-%include "gui/ui_event.h"
-%include "gui/conversation.h"
-%include "gui/window_manager.h"
+%include <adonthell/gui/widget.h>
+%include <adonthell/gui/font.h>
+%include <adonthell/gui/label.h>
+%include <adonthell/gui/button.h>
+%include <adonthell/gui/layout.h>
+%include <adonthell/gui/listlayout.h>
+%include <adonthell/gui/canvas.h>
+%include <adonthell/gui/indicatorbar.h>
+%include <adonthell/gui/scrollview.h>
+%include <adonthell/gui/option.h>
+%include <adonthell/gui/textbox.h>
+%include <adonthell/gui/ui_event.h>
+%include <adonthell/gui/conversation.h>
+%include <adonthell/gui/window.h>
+%include <adonthell/gui/window_manager.h>
 
 

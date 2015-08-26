@@ -1,8 +1,10 @@
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_builddir)
 EXTRA_DIST = CMakeLists.txt
 
+adonthellincludedir = $(pkgincludedir)-@VERSION@/adonthell
+
 ## Our header files
-pkgincludeworlddir = $(pkgincludedir)/world
+pkgincludeworlddir = $(adonthellincludedir)/world
 pkgincludeworld_HEADERS = \
     action.h \
     area.h \
@@ -86,11 +88,21 @@ libadonthell_world_la_LIBADD = $(PY_LIBS) $(libglog_LIBS) \
 test_CXXFLAGS = $(libgmock_CFLAGS) $(libgtest_CFLAGS)
 test_LDADD    = $(libgmock_LIBS)   $(libgtest_LIBS) $(top_builddir)/src/world/libadonthell_world.la
 
+test_cube_SOURCES  = test_cube.cc
+test_cube_CXXFLAGS = $(libadonthell_world_la_CXXFLAGS) $(test_CXXFLAGS)
+test_cube_LDADD    = $(libadonthell_world_la_LIBADD)   $(test_LDADD)
+
+test_placeable_SOURCES  = test_placeable.cc
+test_placeable_CXXFLAGS = $(libadonthell_world_la_CXXFLAGS) $(test_CXXFLAGS)
+test_placeable_LDADD    = $(libadonthell_world_la_LIBADD)   $(test_LDADD)
+
 test_renderer_SOURCES  = test_renderer.cc
 test_renderer_CXXFLAGS = $(libadonthell_world_la_CXXFLAGS) $(test_CXXFLAGS)
 test_renderer_LDADD    = $(libadonthell_world_la_LIBADD)   $(test_LDADD)
 
 TESTS = \
-	test_renderer
+    test_cube \
+	test_renderer \
+	test_placeable
 
 check_PROGRAMS = $(TESTS)

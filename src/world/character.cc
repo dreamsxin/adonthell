@@ -28,11 +28,11 @@
 
 #include <cmath>
 
-#include "base/logging.h"
-#include "rpg/character.h"
-#include "world/area.h"
-#include "world/character.h"
-#include "world/shadow.h"
+#include <adonthell/base/logging.h>
+#include <adonthell/rpg/character.h>
+#include "area.h"
+#include "character.h"
+#include "shadow.h"
 
 using world::character;
 using world::area;
@@ -59,6 +59,7 @@ character::character (area & mymap, const std::string & hash, rpg::character * m
 // dtor
 character::~character ()
 {
+    VLOG(1) << logging::indent() << "world::character::~character() invoked";
 }
 
 // get real speed
@@ -96,7 +97,7 @@ void character::jump()
 bool character::update ()
 {
     // the lowest negative VSpeed that can be reached during extended falling
-    static float min_vspeed = -10;
+    static float min_vspeed = -9.6;
 
     // saving the vertical position before movement
     s_int32 prev_z = z ();
@@ -135,7 +136,7 @@ bool character::update ()
     {
         // if vertical velocity is non-zero and we're not moving, we may have hit something
         // but if we did eventually move, reset counter
-        frames_stuck = vz() != 0 && z () == prev_z ? frames_stuck + 1 : 0;
+        frames_stuck = vz() >= 0 && z () == prev_z ? frames_stuck + 1 : 0;
 
         // if we're stuck for more then X frames in a row, assume we've hit the ceiling
         if (frames_stuck > 2)
@@ -308,13 +309,12 @@ bool character::get_state (base::flat & file)
 
     // load movement
     Position.set_str (file.get_string ("pos"));
-    set_position (Position.x(), Position.y());
-    set_altitude (Position.z());
     calculate_ground_pos ();
     
     // update direction
     set_direction (file.get_sint32 ("dir"));
     VSpeed = file.get_float ("vspeed");
+    set_vertical_velocity(VSpeed);
     
     // load schedule
     base::flat record = file.get_flat ("schedule");

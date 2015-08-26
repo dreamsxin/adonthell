@@ -28,7 +28,7 @@
  */
 
 #include "png_wrapper.h"
-#include "base/logging.h"
+#include <adonthell/base/logging.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -65,7 +65,6 @@ namespace gfx
         png_structp png_ptr;
         png_infop info_ptr;
 
-        int number_of_passes;
         png_bytep * row_pointers;
 
         /* open file and test for it being a png */
@@ -107,7 +106,7 @@ namespace gfx
         length = png_get_image_width(png_ptr, info_ptr);
         height = png_get_image_height(png_ptr, info_ptr);
 
-        number_of_passes = png_set_interlace_handling(png_ptr);
+        /*int number_of_passes =*/ png_set_interlace_handling(png_ptr);
         png_read_update_info(png_ptr, info_ptr);
 
         /* read file */
@@ -158,6 +157,7 @@ namespace gfx
         default:
             LOG(ERROR) << logging::indent() << "[read_png_file] color_type of input file must be PNG_COLOR_TYPE_RGBA (is " << png_get_color_type(png_ptr, info_ptr) << ")";
             png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+            free(image);
             return NULL;
         }
 

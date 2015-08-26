@@ -33,8 +33,8 @@
 #include <vector>
 #include <map>
 
-#include "base/hash_map.h"
-#include "rpg/log_entry.h"
+#include <adonthell/base/hash_map.h>
+#include "log_entry.h"
 
 namespace rpg
 {
@@ -93,6 +93,10 @@ namespace rpg
     };
 }
 
+#ifdef __clang__
+#include <functional>
+using std::hash;
+#else
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >= 4
 namespace tr1
 {
@@ -116,6 +120,7 @@ namespace std
         }
     };
 }
+#endif // CLANG
 #endif
 
 namespace rpg 

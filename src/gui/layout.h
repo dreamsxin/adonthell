@@ -26,7 +26,7 @@
 #ifndef GUI_LAYOUT_H
 #define GUI_LAYOUT_H
 
-#include "gui/widget.h"
+#include "widget.h"
 
 namespace gui
 {
@@ -78,7 +78,7 @@ namespace gui
          * @param l layout length
          * @param h layout height
          */
-		layout(const u_int16 & l, const u_int16 & h) : widget(l, h), Selected(0), focused(false)
+		layout(const u_int16 & l, const u_int16 & h) : widget(l, h), Selected(0), Focused(false)
         {
             Selhilite = false;
             Listener = NULL;
@@ -91,7 +91,7 @@ namespace gui
          * @param style filename of widget decoration.
          */
 		layout (const std::string & style)
-		: widget(style), Selected(0), focused(false)
+		: widget(style), Selected(0), Focused(false)
 		{
             Selhilite = false;
             Listener = NULL;
@@ -235,7 +235,7 @@ namespace gui
 		virtual void unfocus()
         {
             if (Children.size()) Children[Selected].Child->unfocus();
-            focused = false;
+            Focused = false;
         }
 
 		/**
@@ -251,7 +251,13 @@ namespace gui
 #endif
 
     protected:
-		/** 
+        typedef enum
+        {
+            NEXT = 0,
+            PREV = 1
+        } select_direction;
+
+        /**
          * @name Keyboard Callbacks.
          *
          * Called when a keystroke happens. returns whether or not the
@@ -290,7 +296,7 @@ namespace gui
 		/// child which currently is selected
         u_int32 Selected;
         /// whether this container has the focus
-		bool focused;
+		bool Focused;
         /// the input handler
         input::listener *Listener;
         /// whether to resize the layout when children are added
@@ -316,10 +322,17 @@ namespace gui
          * @return true if a child became the newly focused element.
          */
 		virtual bool movedown();
-        
+
+        /**
+         * Select the next or previous child.
+         * @param direction NEXT or PREV
+         * @return true if a child became the newly focused element.
+         */
+        virtual bool select_child(gui::layout::select_direction direction);
+
 		// void dofade(int x, int y, const SDL_Surface* s);
 		// bool mousestate[3];
 	};
-};
+}
 
 #endif//GUI_BASE_H

@@ -1,8 +1,10 @@
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_builddir)
 EXTRA_DIST = CMakeLists.txt sdl/linux.cc sdl/winnt.cc sdl/osx.h sdl/osx.m
 
+adonthellincludedir = $(pkgincludedir)-@VERSION@/adonthell
+
 ## Our header files
-pkgincludemaindir = $(pkgincludedir)/main/
+pkgincludemaindir = $(adonthellincludedir)/main/
 pkgincludemain_HEADERS = \
 	adonthell.h
 
@@ -18,6 +20,7 @@ libadonthell_main_la_CXXFLAGS = $(PY_CFLAGS) -DPYTHONSPDIR=\"$(pyexecdir)\" $(AM
 libadonthell_main_la_LIBADD = $(PY_LIBS) -lltdl \
     $(top_builddir)/src/base/libadonthell_base.la \
     $(top_builddir)/src/gfx/libadonthell_gfx.la \
+    $(top_builddir)/src/gui/libadonthell_gui.la \
     $(top_builddir)/src/audio/libadonthell_audio.la \
     $(top_builddir)/src/input/libadonthell_input.la \
     $(top_builddir)/src/python/libadonthell_python.la \

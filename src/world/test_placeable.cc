@@ -29,8 +29,8 @@
  */
 
 
-#include "world/placeable.h"
-#include "world/area.h"
+#include "placeable.h"
+#include "area.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -44,7 +44,7 @@ namespace world
     class placeable_Test : public ::testing::Test {
 
     protected:
-        placeable_Test() : object(nowhere) {
+        placeable_Test() : object(nowhere, "") {
         }
 
         virtual ~placeable_Test() {

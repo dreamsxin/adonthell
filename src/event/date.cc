@@ -26,28 +26,32 @@
  * @brief Implements the date class.
  */
 
-#include "event/manager.h"
-#include "event/date.h"
-#include "event/time_event.h"
-#include "base/base.h"
-#include "base/diskio.h"
+#include "manager.h"
+#include "date.h"
+#include "time_event.h"
+#include <adonthell/base/base.h>
+#include <adonthell/base/diskio.h>
 
 /// filename of time data file
 #define TIME_DATA "time.data"
+#define INITVAL_TIME 0
+#define INITVAL_SCALE 5.0
+#define INITVAL_RESOLUTION 1
+#define INITVAL_TICKS 0.0
 
 using events::date;
 
 // gametime seconds spent in the gameworld so far
-u_int32 date::Time = 0;
+u_int32 date::Time = INITVAL_TIME;
 
 // how many game cycles make one second of game time
-float date::Scale = 5.0;
+float date::Scale = INITVAL_SCALE;
 
 // number of game time seconds before a time event will be raised
-u_int16 date::Resolution = 1;
+u_int16 date::Resolution = INITVAL_RESOLUTION;
 
 // number of game cycles since the last gametime second passed
-double date::Ticks = 0.0;
+double date::Ticks = INITVAL_TICKS;
 
 
 // Increase gametime 
@@ -94,6 +98,14 @@ bool date::save (const std::string & path)
     
     // write file to disk
     return file.put_record (path + "/" + TIME_DATA);
+}
+
+void date::cleanup ()
+{
+    Resolution = INITVAL_RESOLUTION;
+    Time = INITVAL_TIME;
+    Ticks = INITVAL_TICKS;
+    Scale = INITVAL_SCALE;
 }
 
 // load state from stream
@@ -195,7 +207,7 @@ u_int32 date::parse_time (const std::string & time)
                 // error
                 default:
                 {
-                    fprintf (stderr, "*** date::parse_time: Unknown time specifier '%c'\n", time[i]);
+                    LOG(ERROR) << "Unknown time specifier '" << time[i] << "'";
                     break;
                 }
             }
@@ -205,7 +217,7 @@ u_int32 date::parse_time (const std::string & time)
     }
 
     if (number != 0)
-        fprintf (stderr, "*** date::parse_time: Time specifier missing at end of '%s'\n", time.c_str ());
+        LOG(ERROR) << "Time specifier missing at end of '" << time << "'";
         
     return secs;
 }

@@ -25,9 +25,27 @@
  *
  */
 
-#include "base/logging.h"
+#include "logging.h"
 
 #include <string>
+#include <cstring>
+
+namespace base
+{
+    void stderr_to_log::write (const char *msg)
+    {
+        if (strchr(msg, '\n') == NULL)
+        {
+            Buffer << msg;
+        }
+        else
+        {
+            const std::string& buf = Buffer.str();
+            LOG(ERROR) << buf << msg;
+            Buffer.str("");
+        }
+    }
+}
 
 namespace google
 {

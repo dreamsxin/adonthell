@@ -23,7 +23,7 @@
  * @brief  Implements the scrollview class.
  */
 
-#include "gui/scrollview.h"
+#include "scrollview.h"
 
 using gui::scrollview;
 
@@ -76,7 +76,7 @@ void scrollview::draw(const s_int16 & x, const s_int16 & y, const gfx::drawing_a
 // set the container that should be scrolled
 void scrollview::set_child (layout & c)
 {
-	bool refocus = focused;
+	bool refocus = Focused;
 	if (!Children.empty())
 	{
 		remove_child (*Children[0].Child);

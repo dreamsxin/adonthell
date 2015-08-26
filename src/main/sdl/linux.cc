@@ -29,7 +29,8 @@
  * 
  */
 
-#include "main/adonthell.h"
+#include "../adonthell.h"
+#include "SDL.h"
 
 #ifdef USE_LIBTOOL
 /* exported names for libltdl */
@@ -43,6 +44,10 @@ int main_init (const adonthell::app *theApp)
 {
     // no need to initialize anything, so just start the application ...
     int retval = ((adonthell::app *) theApp)->main ();
+
+    // properly stop SDL
+    SDL_Quit();
+
     return retval;
 }
 

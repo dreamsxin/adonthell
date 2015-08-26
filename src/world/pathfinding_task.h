@@ -28,9 +28,9 @@
 #ifndef PATHFINDING_TASK_H
 #define PATHFINDING_TASK_H
 
-#include "base/callback.h"
-#include "world/character.h"
-#include "world/coordinates.h"
+#include <adonthell/base/callback.h>
+#include "character.h"
+#include "coordinates.h"
 
 namespace world
 {
@@ -40,26 +40,42 @@ namespace world
     class pathfinding_task
     {
     public:
+        pathfinding_task()
+        {
+            chr = NULL;
+            callback = NULL;
+        }
+
         /// The character being moved
         world::character * chr;
         /// Callback to execute when task completes/fails
         base::functor_1<const s_int32> * callback;
-        /// The target position (in pixels)
+        /// The lower position of the goal area (in pixels)
         world::vector3<s_int32> target;
+        /// The upper position of the goal area (in pixels)
         world::vector3<s_int32> target2;
 
         /// The path to the target, as a group of nodes
-        std::vector<coordinates> * path;
+        std::vector<coordinates> path;
         /// The character's position in the last frame
         world::coordinates lastPos;
+        /// Number of iterations left to calculate the path
+        u_int16 iterations;
+        /// The actual node being moved to
+        u_int16 actualNode;
         /// The phase where this task is
         u_int8 phase;
-        /// The actual node being moved to
-        u_int8 actualNode;
         /// Actual Direction
         u_int8 actualDir;
         /// Final Direction to where a character points after finishing moving
         u_int8 finalDir;
+        /// Number of recalculations
+        u_int8 numBlocked;
+        /// Executes the search
+        world::pathfinding m_pathfinding;
+    private:
+        /// forbid copy construction
+        pathfinding_task (const pathfinding_task & t);
     };
 }
 

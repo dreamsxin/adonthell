@@ -212,13 +212,14 @@ namespace gfx
         {
             lock(&dstrect);
 
-            u_int32 src[dstrect.w * dstrect.h];
+            u_int32 *src = new u_int32[dstrect.w * dstrect.h];
             std::fill_n(src, dstrect.w * dstrect.h, col);
 
             SDL_ConvertPixels (dstrect.w, dstrect.h,
-                SDL_PIXELFORMAT_ARGB8888, (void*) src, dstrect.w*4,
+                SDL_PIXELFORMAT_ARGB8888, (const void*) src, dstrect.w*4,
                 Info->Format, Info->Pixels, Info->Pitch);
 
+            delete[] src;
             unlock();
         }
     }
@@ -348,6 +349,7 @@ namespace gfx
                 break;
             default:
                 LOG(FATAL) << "*** sdl::put_pix: Unsupported format " << SDL_GetPixelFormatName(Info->Format);
+                break;
         }
     }
 
@@ -415,6 +417,7 @@ namespace gfx
                 break;
             default:
                 LOG(FATAL) << "sdl::get_pix: Unsupported format " << SDL_GetPixelFormatName(Info->Format);
+                break;
         }
 
 #ifdef __BIG_ENDIAN__
@@ -424,7 +427,7 @@ namespace gfx
 #endif
     }
 
-    void surface_sdl::scale(surface *target, const u_int32 & factor) const
+    void surface_sdl::scale_up(surface *target, const u_int32 & factor) const
     {
         // scaling of the final result is handled in surface_sdl::draw
         if (!target || target == display) return;
@@ -464,6 +467,35 @@ namespace gfx
 
             // goto next line
             target_data += target_surf->pitch;
+        }
+
+        target->unlock();
+        SDL_FreeSurface(target_surf);
+    }
+
+    void surface_sdl::scale_down(surface *target, const u_int32 & factor) const
+    {
+        // downscaling directly to screen is not supported
+        if (!target || target == display) return;
+
+        if (length() / factor > target->length() ||
+            height() / factor > target->height())
+            return;
+
+        lock(NULL);
+        SDL_Surface *target_surf = ((surface_sdl*) target)->to_sw_surface ();
+
+        s_int32 target_y = 0;
+        for (s_int32 src_y = factor/2; src_y < height(); src_y += factor)
+        {
+            s_int32 target_x = 0;
+            for (s_int32 src_x = factor/2; src_x < length(); src_x += factor)
+            {
+                u_int32 px = get_pix (src_x, src_y);
+                target->put_pix (target_x, target_y, px);
+                target_x++;
+            }
+            target_y++;
         }
 
         target->unlock();
@@ -614,17 +646,14 @@ namespace gfx
         if (draw_to)
         { 
             drawing_area im_zone (x, y, sl, sh);
-            drawing_area da_int = draw_to->setup_rects ();
+            im_zone.assign_drawing_area (draw_to);
 
-            im_zone.assign_drawing_area (&da_int);
-            da_int = im_zone.setup_rects ();
-            SDL_Rect tr;
-            tr.x = da_int.x();
-            tr.y = da_int.y();
-            tr.w = da_int.length();
-            tr.h = da_int.height();
+            drawing_area da_int = im_zone.setup_rects ();
+            dstrect.x = da_int.x();
+            dstrect.y = da_int.y();
+            dstrect.w = da_int.length();
+            dstrect.h = da_int.height();
 
-            dstrect = tr; 
             srcrect = dstrect;
             srcrect.x = x < dstrect.x ? sx + dstrect.x - x : sx;
             srcrect.y = y < dstrect.y ? sy + dstrect.y - y : sy;
@@ -637,7 +666,6 @@ namespace gfx
             srcrect.h = sh;
 
             dstrect = srcrect;
-
             dstrect.x = x;
             dstrect.y = y;
         } 

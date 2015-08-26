@@ -1,18 +1,18 @@
-AM_CXXFLAGS = -I$(top_srcdir)/src
-DEFAULT_INCLUDES = -I$(srcdir) -I$(top_builddir)
-EXTRA_DIST = CMakeLists.txt sdlgl/screen_sdlgl.h sdlgl/surface_sdlgl.h sdlgl/gfx_sdlgl.cc \
-	sdlgl/screen_sdlgl.cc sdlgl/surface_sdlgl.cc sdl/screen_sdl.h sdl/surface_sdl.h \
-	sdl/gfx_sdl.cc sdl/screen_sdl.cc sdl/surface_sdl.cc sdl2/screen_sdl.h sdl2/surface_sdl.h \
+AM_CXXFLAGS = -I$(top_builddir)
+DEFAULT_INCLUDES = -I$(top_builddir)
+EXTRA_DIST = CMakeLists.txt sdl/screen_sdl.h sdl/surface_sdl.h sdl/gfx_sdl.cc \
+	sdl/screen_sdl.cc sdl/surface_sdl.cc sdl2/screen_sdl.h sdl2/surface_sdl.h \
 	sdl2/gfx_sdl.cc sdl2/screen_sdl.cc sdl2/surface_sdl.cc
 
 
+adonthellincludedir = $(pkgincludedir)-@VERSION@/adonthell
+
 ## Our header files
-pkgincludegfxdir = $(pkgincludedir)/gfx
+pkgincludegfxdir = $(adonthellincludedir)/gfx
 pkgincludegfx_HEADERS = \
 	drawable.h \
 	drawing_area.h \
 	gfx.h \
-    image.h \
 	png_wrapper.h \
 	screen.h \
     sprite.h \
@@ -28,7 +28,6 @@ libadonthell_gfx_la_SOURCES = \
 	drawable.cc \
 	drawing_area.cc \
 	gfx.cc \
-    image.cc \
 	png_wrapper.cc \
 	screen.cc \
     sprite.cc \
@@ -48,7 +47,6 @@ libadonthell_gfx_la_LIBADD = $(PY_LIBS) -lltdl \
 ###### Following definitions are for the backends
 pkglibgfxdir = $(pkglibdir)/gfx
 pkglibgfx_LTLIBRARIES = _sdl.la
-#sdlgl.la
 
 
 ### SDL backend
@@ -71,19 +69,3 @@ _sdl_la_LIBADD = $(SDL_LIBS) -ladonthell_gfx
 ## define dependencies in case of parallel build
 _sdl_la_DEPENDENCIES = libadonthell_gfx.la
 
-### SDLGL backend
-
-## Our header files
-#noinst_HEADERS = \
-#	sdlgl/screen_sdlgl.h \
-#	sdlgl/surface_sdlgl.h
-
-## Rules to build libgfx_sdl
-#sdlgl_la_SOURCES = \
-#	sdlgl/gfx_sdlgl.cc \
-#	sdlgl/screen_sdlgl.cc \
-#	sdlgl/surface_sdlgl.cc
-
-#sdlgl_la_CXXFLAGS = $(SDL_CFLAGS) $(AM_CXXFLAGS)
-#sdlgl_la_LDFLAGS = -module -avoid-version
-#sdlgl_la_LIBADD = $(SDL_LIBS) -ladonthell_gfx -lGLU -lGL
